@@ -36,8 +36,8 @@ export async function isFreighterInstalled(): Promise<boolean> {
   try {
     const result = await isConnected();
     // isConnected returns { isConnected: boolean } or boolean depending on version
-    if (typeof result === "object" && "isConnected" in result) {
-      return result.isConnected;
+    if (typeof result === "object" && result !== null && "isConnected" in result) {
+      return (result as { isConnected: boolean }).isConnected;
     }
     return Boolean(result);
   } catch {
@@ -51,8 +51,8 @@ export async function isFreighterInstalled(): Promise<boolean> {
 export async function hasSiteAccess(): Promise<boolean> {
   try {
     const result = await isAllowed();
-    if (typeof result === "object" && "isAllowed" in result) {
-      return result.isAllowed;
+    if (typeof result === "object" && result !== null && "isAllowed" in result) {
+      return (result as { isAllowed: boolean }).isAllowed;
     }
     return Boolean(result);
   } catch {
@@ -87,8 +87,8 @@ export async function connectWallet(): Promise<{
     // 3. Get the public key
     const result = await getPublicKey();
     const publicKey =
-      typeof result === "object" && "publicKey" in result
-        ? result.publicKey
+      typeof result === "object" && result !== null && "publicKey" in result
+        ? (result as { publicKey: string }).publicKey
         : (result as string);
 
     if (!publicKey) {
@@ -121,8 +121,8 @@ export async function getConnectedPublicKey(): Promise<string | null> {
 
     const result = await getPublicKey();
     const pk =
-      typeof result === "object" && "publicKey" in result
-        ? result.publicKey
+      typeof result === "object" && result !== null && "publicKey" in result
+        ? (result as { publicKey: string }).publicKey
         : (result as string);
     return pk || null;
   } catch {
@@ -150,8 +150,8 @@ export async function signTransactionWithWallet(
     });
 
     const signedXDR =
-      typeof result === "object" && "signedTransaction" in result
-        ? result.signedTransaction
+      typeof result === "object" && result !== null && "signedTransaction" in result
+        ? (result as { signedTransaction: string }).signedTransaction
         : (result as string);
 
     return { signedXDR, error: null };

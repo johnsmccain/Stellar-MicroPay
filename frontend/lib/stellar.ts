@@ -167,7 +167,7 @@ export async function getPaymentHistory(
     // Fetch transaction for memo
     let memo: string | undefined;
     try {
-      const tx = await payment.transaction();
+      const tx = await server.transactions().transaction(payment.transaction_hash).call();
       if (tx.memo && tx.memo_type === "text") {
         memo = tx.memo;
       }
