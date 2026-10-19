@@ -5,12 +5,28 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node -e \"require('./server')\""
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "express": "^4.19.2"
   },
   "engines": {
     "node": "20.19.5"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.3.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "server.js"
+    ],
+    "coverageDirectory": "coverage"
   }
 }

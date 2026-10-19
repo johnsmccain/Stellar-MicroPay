@@ -1,6 +1,6 @@
 # 🧪 Testing
 
-Everything you need to run the full Stellar MicroPay test suite locally. Four suites, each runnable on its own, plus a Docker-based integration run against a mock Horizon server:
+Everything you need to run the full Stellar MicroPay test suite locally. Five suites, each runnable on its own, plus a Docker-based integration run against a mock Horizon server:
 
 | Suite | Runner | Location | Command |
 | --- | --- | --- | --- |
@@ -8,6 +8,7 @@ Everything you need to run the full Stellar MicroPay test suite locally. Four su
 | Frontend e2e | [Playwright](https://playwright.dev/) | `frontend/e2e/` | `npm run test:e2e` |
 | Backend unit | [Jest](https://jestjs.io/) + Supertest | `backend/__tests__/` | `npm test` |
 | Soroban contract | `cargo test` + `soroban-sdk` testutils | `contracts/stellar-micropay-contract/` | `cargo test` |
+| Mock Horizon | [Jest](https://jestjs.io/) + Supertest | `mock-horizon/__tests__/` | `npm test --prefix mock-horizon` |
 | Backend integration | Backend Jest suite + [mock Horizon](mock-horizon/README.md) | `docker-compose.test.yml` | `docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from backend-test` |
 
 All commands below are copy-paste runnable from the repo root unless the snippet says otherwise. CI runs the same commands — see [What CI runs](#-what-ci-runs).
@@ -21,6 +22,7 @@ All commands below are copy-paste runnable from the repo root unless the snippet
 - [Frontend e2e tests (Playwright)](#-frontend-e2e-tests-playwright)
 - [Backend unit tests](#-backend-unit-tests)
 - [Soroban contract tests](#-soroban-contract-tests)
+- [Mock Horizon tests](#-mock-horizon-tests)
 - [Integration tests (mock Horizon)](#-integration-tests-mock-horizon)
 - [Running everything](#-running-everything)
 - [Adding new tests](#-adding-new-tests)
@@ -148,6 +150,27 @@ Docs: [Jest getting started](https://jestjs.io/docs/getting-started) · [Superte
 
 ---
 
+## 🛰 Mock Horizon tests
+
+The mock Horizon server has a suite of its own, so the stand-in for Horizon cannot drift away from the real API without turning CI red. It pins the field names, JSON types and link envelopes of every endpoint against the shapes documented at [developers.stellar.org](https://developers.stellar.org/docs/data/apis/horizon).
+
+```bash
+cd mock-horizon && npm ci && npm test          # the mock's own suite
+npm run test:coverage --prefix mock-horizon    # coverage of mock-horizon/server.js
+```
+
+| File | Covers |
+| --- | --- |
+| [`mock-horizon/__tests__/horizon-contract.test.js`](mock-horizon/__tests__/horizon-contract.test.js) | The response contract: field names, JSON types, `_links` and `_embedded.records` envelopes, problem documents |
+| [`mock-horizon/__tests__/routes.test.js`](mock-horizon/__tests__/routes.test.js) | The success path of every implemented endpoint and its fixtures |
+| [`mock-horizon/__tests__/errors.test.js`](mock-horizon/__tests__/errors.test.js) | Error responses: unknown routes, malformed bodies, injected 504/429, transaction result codes |
+| [`mock-horizon/__tests__/control.test.js`](mock-horizon/__tests__/control.test.js) | The `/_control` endpoint and the failure injection it drives |
+| [`mock-horizon/__tests__/startup.test.js`](mock-horizon/__tests__/startup.test.js) | The module exports and the `node server.js` entry point |
+
+The shared field lists live in [`mock-horizon/__tests__/helpers/horizon-contract.js`](mock-horizon/__tests__/helpers/horizon-contract.js) — that is the single place to update when Horizon changes a response.
+
+---
+
 ## 🧱 Integration tests (mock Horizon)
 
 [`docker-compose.test.yml`](docker-compose.test.yml) runs two containers. `mock-horizon` is a small fake Horizon API (source: [`mock-horizon/server.js`](mock-horizon/server.js)). `backend-test` runs the backend Jest suite with `HORIZON_URL=http://mock-horizon:8000`, after the mock's healthcheck passes.
@@ -165,7 +188,7 @@ Run the mock on its own:
 cd mock-horizon && npm install && npm start    # http://localhost:8000
 ```
 
-It only covers `/`, `/accounts/:id`, `/accounts/:id/payments`, `/accounts/:id/transactions` and `POST /transactions`. There's no pagination, no streaming and no error responses. It's plain `http://`, which `Horizon.Server` rejects without `allowHttp`. Before relying on it, read [`mock-horizon/README.md`](mock-horizon/README.md) for the full endpoint and fixture tables, how to point the backend or frontend at it, its limitations and how to extend it.
+It covers `/`, `/health`, `/fee_stats`, `/ledgers`, `/accounts/:id`, `/accounts/:id/payments`, `/accounts/:id/transactions` and `POST /transactions`, plus the `/_control` endpoint that injects failures. There's no pagination beyond a single page, no streaming and no state. It's plain `http://`, which `Horizon.Server` rejects without `allowHttp`. Before relying on it, read [`mock-horizon/README.md`](mock-horizon/README.md) for the full endpoint and fixture tables, how to point the backend or frontend at it, its limitations and how to extend it.
 
 ---
 
@@ -204,7 +227,7 @@ Docs: [Rust test harness](https://doc.rust-lang.org/book/ch11-01-writing-tests.h
 
 ## 🚀 Running everything
 
-Fresh clone, all four suites:
+Fresh clone, all five suites:
 
 ```bash
 # 1. Frontend unit
@@ -218,6 +241,9 @@ cd backend && npm ci && npm test && cd ..
 
 # 4. Contract
 cargo test
+
+# 5. Mock Horizon
+cd mock-horizon && npm ci && npm test && cd ..
 ```
 
 Or from the repo root in one shot (POSIX shell / Git Bash / WSL):
@@ -225,8 +251,11 @@ Or from the repo root in one shot (POSIX shell / Git Bash / WSL):
 ```bash
 npm ci --prefix frontend && npm test --prefix frontend
 npm ci --prefix backend  && npm test --prefix backend
+npm ci --prefix mock-horizon && npm test --prefix mock-horizon
 cargo test
 ```
+
+`npm run test:all` at the repo root runs the backend, frontend and mock-horizon suites plus the contract tests.
 
 What CI additionally runs that the suites above do not:
 
@@ -345,6 +374,7 @@ Mirrors of the jobs in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 | --- | --- | --- |
 | `frontend` | `frontend/` | `npm ci` → `npm run type-check` → `npm run lint` → `npm test` → `npm run build` |
 | `backend` | `backend/` | `npm ci` → `npm run lint` → `npm test` |
+| `mock-horizon` | `mock-horizon/` | `npm ci` → `npm test` |
 | `contracts` | repo root | `cargo check --target wasm32v1-none` → `cargo test` → `cargo build --target wasm32v1-none --release` |
 | `e2e` | `frontend/` | `npm ci` → `npx playwright install --with-deps chromium` → `npm run test:e2e` |
 | `integration-test` | repo root | `docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from backend-test` → `down --volumes --remove-orphans` |
@@ -354,6 +384,7 @@ Run the same list locally before opening a PR:
 ```bash
 npm run type-check --prefix frontend && npm run lint --prefix frontend && npm test --prefix frontend
 npm run lint --prefix backend && npm test --prefix backend
+npm test --prefix mock-horizon
 cargo test
 ```
 
@@ -370,7 +401,7 @@ cargo test
 | `cargo test` fails to resolve the SDK | Run from the repo root (workspace) or the contract dir, and confirm `Cargo.lock`/registry access |
 | `env(...) is empty` in a contract test | Use `Env::default()` per test, or `Env::default()` with an explicit `Env { ..Env::default() }` ledger config; nothing external is needed |
 | `Cannot connect to insecure horizon server` | `Horizon.Server` was given the `http://` mock URL without `{ allowHttp: true }`; see [mock-horizon/README.md](mock-horizon/README.md#-pointing-the-app-at-it) |
-| Mock Horizon returns an HTML `Cannot GET ...` page | That endpoint isn't implemented; add it to `mock-horizon/server.js` or mock it in the test |
+| Mock Horizon returns a 404 `Resource Missing` problem document | That endpoint isn't implemented; add it to `mock-horizon/server.js` or mock it in the test |
 | Backend suite needs credentials | `cp backend/.env.example backend/.env`; most suites mock Stellar and need no live network |
 
 ---

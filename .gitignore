@@ -16,6 +16,9 @@ frontend/.env.production.local
 backend/.env
 backend/logs/
 
+# ─── Mock Horizon ────────────────────────────────────────────────────────────
+mock-horizon/coverage/
+
 # ─── Rust / Cargo ─────────────────────────────────────────────────────────────
 target/
 Cargo.lock
