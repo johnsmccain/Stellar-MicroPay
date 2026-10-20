@@ -153,6 +153,8 @@ curl -X POST http://localhost:8000/_control/reset
 
 ## 📡 Implemented endpoints
 
+Every response follows the shape of the public Horizon API (see the [Horizon API reference](https://developers.stellar.org/docs/data/apis/horizon/api-reference)). The field lists are pinned by the [mock's own test suite](#-testing), so the mock cannot drift away from the contract the backend and the frontend are written against.
+
 | Method | Path | Response |
 | --- | --- | --- |
 | `GET` | `/` | Root document: `horizon_version: "mock-2.1.0"`, `core_version: "mock"`, testnet `network_passphrase` |
@@ -163,9 +165,53 @@ curl -X POST http://localhost:8000/_control/reset
 | `GET` | `/accounts/:accountId` | Account record (see fixtures). |
 | `GET` | `/accounts/:accountId/payments` | One-record page with a single native payment. |
 | `GET` | `/accounts/:accountId/transactions` | Empty page (`records: []`). |
-| `GET` | `/fee_stats` | Fee stats breakdown (min, p50, p90, max). |
+| `GET` | `/fee_stats` | Fee stats with the accepted fees nested under `fee_charged` and `max_fee`. |
 | `GET` | `/ledgers` | Recent ledger record. |
 | `POST` | `/transactions` | Submits transaction. Responds 200 with hash or 400 if `submitResultCode` configured. |
+| any | *unknown path* | 404 problem document (`not_found` / "Resource Missing"), like Horizon. |
+
+### Error responses
+
+Every non-2xx response is a Horizon problem document:
+
+```json
+{
+  "type": "https://stellar.org/horizon-errors/not_found",
+  "title": "Resource Missing",
+  "status": 404,
+  "detail": "The resource at the url requested was not found.  This usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided."
+}
+```
+
+A failed transaction submission adds the result codes Horizon reports in `extras`:
+
+```json
+{
+  "type": "https://stellar.org/horizon-errors/transaction_failed",
+  "title": "Transaction Failed",
+  "status": 400,
+  "detail": "The transaction failed when submitted to the stellar network: tx_bad_seq",
+  "extras": {
+    "envelope_xdr": "AAAA…",
+    "result_xdr": "",
+    "result_codes": { "transaction": "tx_bad_seq" }
+  }
+}
+```
+
+`result_codes` has the shape the Stellar SDK reads in `TransactionFailedError.getResultCodes()`: a `transaction` code and an optional list of `operations` codes.
+
+### Deliberate differences from Horizon
+
+The mock is a permissive test double, so a few things differ from the real API on purpose:
+
+| Difference | Why |
+| --- | --- |
+| Every account id is accepted, even one that is not a valid Stellar key | Tests use placeholder ids such as `G_TEST_ACCOUNT_123`; a real account list would make the fixtures unpredictable. |
+| `POST /transactions` accepts a JSON body | The Stellar SDK submits `application/x-www-form-urlencoded`; the mock accepts both so a test can post either way. |
+| The transactions page is always empty | There is no transaction history to serve. |
+| Every collection is a single page | The paging parameters are echoed in the `_links`, but there is no second page to follow. |
+| There is no streaming and no state | Every response is served from static fixtures. |
 
 ---
 
@@ -176,10 +222,40 @@ The mock has no state and no account list. **Every account ID is accepted** and 
 | Field | Value |
 | --- | --- |
 | `sequence` | `"1234567890"` |
-| `balances` | `[{ "asset_type": "native", "balance": "100.0000000" }]` |
+| `balances` | `[{ "asset_type": "native", "balance": "100.0000000", "buying_liabilities": "0.0000000", "selling_liabilities": "0.0000000" }]` |
+| `thresholds` | `{ "low_threshold": 0, "med_threshold": 0, "high_threshold": 0 }` |
+| `signers` | `[{ "key": "<account id>", "weight": 1, "type": "ed25519_public_key" }]` |
 | Payment `id` | `"mock-payment-1"` |
 | Payment | `10.0000000` XLM `from` the requested account `to` `GBMOCK000RECEIVER000000000000000000000000000000000000000` |
 | Payment `created_at` | Current time |
+| Payment `transaction_hash` | 64 zeroes — a well-formed transaction hash |
+| `fee_stats` | `last_ledger_base_fee: "100"`, percentiles nested under `fee_charged` and `max_fee` |
+| Ledger `sequence` | `12345` |
 | Submitted tx `hash` | `mocktxhash0000000000000000000000000000000000000000000000000000` |
 | Submitted tx `ledger` | `12345` |
 | Network passphrase | `Test SDF Network ; September 2015` (testnet) |
+
+---
+
+## 🧪 Testing
+
+The mock has a test suite of its own. It asserts the response contract of every endpoint — field names, JSON types, `_links` and `_embedded.records` envelopes and the problem documents errors are reported in — against the shapes the public Horizon API returns, so a field that is renamed or dropped fails CI instead of silently invalidating the integration tests.
+
+```bash
+cd mock-horizon
+npm ci
+npm test                # the whole suite
+npm run test:watch      # re-runs on change
+npm run test:coverage   # coverage of server.js
+```
+
+| File | Covers |
+| --- | --- |
+| `__tests__/horizon-contract.test.js` | The response contract: field names, JSON types, link envelopes, problem documents |
+| `__tests__/routes.test.js` | The success path of every implemented endpoint and its fixtures |
+| `__tests__/errors.test.js` | Unknown routes, malformed bodies, injected 504/429, transaction result codes |
+| `__tests__/control.test.js` | The `/_control` endpoint and the failure injection it drives |
+| `__tests__/startup.test.js` | The module exports and the `node server.js` entry point |
+| `__tests__/helpers/horizon-contract.js` | The shared field lists — the single place to update when Horizon changes a response |
+
+The suite runs in CI as the `mock-horizon` job (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).

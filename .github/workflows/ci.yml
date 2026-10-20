@@ -264,10 +264,9 @@ jobs:
 
           echo "All high/critical advisories are allowlisted in $ALLOWLIST."
 
-      # The mock is the stand-in for Horizon in the integration tests, and it
-      # owns the failure-injection suite that exercises its error paths. Both
-      # run here so a drifted mock fails in this job instead of quietly
-      # invalidating the integration tests.
+      # The mock is the stand-in for Horizon in the integration tests. Its own
+      # suite pins the response shapes to Horizon's contract, so a drifted
+      # mock fails here instead of quietly invalidating the integration tests.
       - run: npm test
 
   test-contracts:

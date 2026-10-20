@@ -9,6 +9,7 @@ dev: ## Start frontend and backend in watch mode
 test: ## Run all test suites
 	npm run test --prefix frontend --if-present
 	npm run test --prefix backend --if-present
+	npm run test --prefix mock-horizon --if-present
 	cd contracts/stellar-micropay-contract && cargo test
 
 contract-test: ## Run only the Soroban contract test suite
@@ -45,6 +46,7 @@ clean: ## Remove node_modules and build artifacts
 	rm -rf node_modules
 	rm -rf frontend/node_modules frontend/.next frontend/out
 	rm -rf backend/node_modules
+	rm -rf mock-horizon/node_modules
 	rm -rf target
 
 # ---------------------------------------------------------------------------
