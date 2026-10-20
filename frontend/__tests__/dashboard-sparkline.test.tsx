@@ -22,7 +22,7 @@ jest.mock("@/components/CreatorTipsDashboard", () => () => <div>Creator Tips</di
 jest.mock("@/components/OnboardingTour", () => () => null);
 jest.mock("@/components/AIPaymentAssistant", () => () => null);
 jest.mock("@/components/ExternalPaymentBanner", () => () => null);
-jest.mock("@/pages/PaymentRequestGenerator", () => () => <div>Payment Request</div>);
+jest.mock("@/components/PaymentRequestGenerator", () => () => <div>Payment Request</div>);
 jest.mock("@/components/SendPaymentForm", () => ({
   __esModule: true,
   default: () => <div>Send Payment</div>,

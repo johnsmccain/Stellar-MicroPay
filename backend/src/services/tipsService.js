@@ -8,6 +8,7 @@
 
 const usernameService = require("./usernameService");
 const { getLeaderboardOptOutStore } = require("../storage/leaderboardOptOutStore");
+const { getConfig } = require("../config/env");
 
 /**
  * Accounts that opted out of public leaderboards (#1511) are removed from
@@ -204,7 +205,7 @@ function getLeaderboard() {
   const federationNames = new Map(
     usernameService.getAllUsernames().map(({ username, publicKey }) => [
       publicKey,
-      `${username}*${process.env.DOMAIN || "stellarmicropay.com"}`,
+      `${username}*${getConfig().domain}`,
     ])
   );
   const ranked = (totals) => [...totals.entries()]

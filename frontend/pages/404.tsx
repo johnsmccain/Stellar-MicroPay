@@ -3,6 +3,7 @@
  * Custom 404 page — matches the app's dark cosmos theme with stellar branding.
  */
 
+import Head from "next/head";
 import Link from "next/link";
 import { useTranslation } from "@/contexts/I18nContext";
 
@@ -78,7 +79,7 @@ export default function Custom404() {
           <p className="text-slate-600 text-sm">
             {t("notFound.errorLead")}
             <a
-              href="https://github.com/your-org/stellar-micropay/issues"
+              href="https://github.com/Emmy123222/Stellar-MicroPay/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="text-stellar-400 hover:text-stellar-300 transition-colors"

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { logger } from "../utils/logger";
+const { getConfig } = require("../config/env");
 
 const router = Router();
 
@@ -133,7 +134,7 @@ router.post("/", async (req: Request, res: Response) => {
     });
   }
 
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const anthropicKey = getConfig().anthropicApiKey;
 
   if (!anthropicKey) {
     logger.warn("ANTHROPIC_API_KEY not configured for AI payment parsing");

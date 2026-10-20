@@ -122,9 +122,9 @@ The deployment consists of three main containers:
 
 ## Step-by-Step Deployment
 
-1. **Clone the repository**:
+1. **Clone the canonical repository**:
    ```bash
-   git clone https://github.com/devkayazumi/Stellar-MicroPay.git
+   git clone https://github.com/Emmy123222/Stellar-MicroPay.git
    cd Stellar-MicroPay
    ```
 

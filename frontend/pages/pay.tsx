@@ -16,7 +16,6 @@ import {
   markPaymentLinkRedeemed,
 } from "@/lib/paymentLinks";
 import { useWallet } from "@/lib/useWallet";
-import { useTranslation } from "@/contexts/I18nContext";
 
 interface PrefillData {
   destination: string;
@@ -29,7 +28,6 @@ export default function PayPage() {
   const { publicKey } = useWallet();
   const { t } = useTranslation();
   const router = useRouter();
-  const { t } = useTranslation();
   const { data } = router.query;
 
   const [prefill, setPrefill] = useState<PrefillData | null>(null);

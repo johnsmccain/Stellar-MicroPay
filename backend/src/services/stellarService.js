@@ -13,15 +13,16 @@
 const { Horizon } = require("@stellar/stellar-sdk");
 const { withCircuitBreaker } = require("../middleware/horizonCircuitBreaker");
 require("dotenv").config();
+const { getConfig } = require("../config/env");
 
-const HORIZON_URL =
-  process.env.HORIZON_URL || "https://horizon-testnet.stellar.org";
+const config = getConfig();
+const HORIZON_URL = config.horizonUrl;
 
 
 const server = new Horizon.Server(HORIZON_URL);
 
 const USDC_ISSUERS = new Set(
-  (process.env.USDC_ISSUER || "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN")
+  config.usdcIssuer
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean)
@@ -249,7 +250,7 @@ async function submitTransaction(signedXDR) {
   // Resolved lazily so the SDK surface is only touched when submitting.
   const { TransactionBuilder, Networks } = require("@stellar/stellar-sdk");
   const networkPassphrase =
-    process.env.STELLAR_NETWORK === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+    config.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 
   let transaction;
   try {

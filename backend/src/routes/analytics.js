@@ -11,9 +11,10 @@ const { strictLimiter } = require("../middleware/rateLimit");
 const { verifyJWT } = require("../middleware/auth");
 const { validatePublicKey, sanitizePublicKey } = require("../middleware/sanitization");
 const analyticsController = require("../controllers/analyticsController");
+const { getConfig } = require("../config/env");
 
 function getAdminPublicKeys() {
-  return (process.env.ADMIN_PUBLIC_KEYS || "")
+  return getConfig().adminPublicKeys
     .split(",")
     .map((key) => key.trim())
     .filter(Boolean);

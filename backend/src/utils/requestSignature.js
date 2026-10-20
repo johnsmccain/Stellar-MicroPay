@@ -26,6 +26,7 @@
 "use strict";
 
 const crypto = require("crypto");
+const { getConfig } = require("../config/env");
 
 /** Header names carrying the signature. */
 const TIMESTAMP_HEADER = "x-timestamp";
@@ -45,13 +46,11 @@ const DEFAULT_MAX_SKEW_MS = 30_000;
  * Shared secret. Overridable so the signer (tests, other services) and the
  * verifier always agree on which key is in play.
  */
-const DEFAULT_SECRET = "stellar_micropay_request_signing_key";
-
 /**
  * @returns {string} the configured signing secret.
  */
 function getSigningSecret() {
-  return process.env.PAYMENT_SIGNING_SECRET || DEFAULT_SECRET;
+  return getConfig().paymentSigningSecret;
 }
 
 /**

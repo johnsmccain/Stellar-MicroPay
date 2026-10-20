@@ -178,7 +178,9 @@ export default function RecipientField({
         <ContactPickerModal
           isOpen={showContactPicker}
           onClose={onContactPickerClose}
-          onSelect={onContactSelect}
+          // The picker hands back a whole contact; this field only cares
+          // about the address it fills in.
+          onSelect={(contact) => onContactSelect(contact.address)}
         />
       )}
     </>

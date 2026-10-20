@@ -12,14 +12,15 @@ const pinoHttp = require("pino-http");
 const crypto = require("node:crypto");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
-const { csrfProtection } = require("./middleware/csrf");
 
 // ─── Env Validation ───────────────────────────────────────────────────────────
 // Must run immediately after dotenv so missing vars are caught before any
 // service or route module tries to use them.
-const { validateEnv, loadSecrets } = require("./config/validateEnv");
-loadSecrets();
+const { validateEnv } = require("./validateEnv");
 validateEnv();
+const { getConfig } = require("./config/env");
+const config = getConfig();
+const { csrfProtection } = require("./middleware/csrf");
 
 const accountRoutes = require("./routes/accounts");
 const authRoutes = require("./routes/auth");
@@ -42,7 +43,7 @@ const logger = require("./logger");
 const { sanitizeRequest } = require("./middleware/sanitization");
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = config.port;
 
 // ─── Middleware ─────────────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ app.use((err, req, res, next) => {
 app.use(sanitizeRequest);
 
 // CORS
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
+const allowedOrigins = config.allowedOrigins
   .split(",")
   .map((o) => o.trim());
 
@@ -138,7 +139,7 @@ app.use("/federation", federationRoutes);
 
 // ─── API Documentation ─────────────────────────────────────────────────────────
 
-if (process.env.METRICS_ENABLED === "true") {
+if (config.metricsEnabled) {
   const client = require("prom-client");
   client.collectDefaultMetrics();
   app.get("/metrics", (req, res) => {
@@ -177,7 +178,7 @@ app.use((err, req, res, next) => {
 // ─── Static Files ─────────────────────────────────────────────────────────────
 
 app.get("/.well-known/stellar.toml", (req, res) => {
-  const domain = process.env.DOMAIN || "stellarmicropay.com";
+  const domain = config.domain;
   const tomlContent = `[FEDERATION_SERVER]
 ACTIVE = true
 SERVER = "https://${domain}/federation"
@@ -191,14 +192,11 @@ SERVER = "https://${domain}/federation"
 if (require.main === module) {
   // Refuse to start on an insecure configuration rather than serving traffic
   // with a publicly-known signing key.
-  loadSecrets();
-  validateEnv();
-
   const server = app.listen(PORT, () => {
     logger.info(`
   ✨ Stellar MicroPay API
   🚀 Server running at http://localhost:${PORT}
-  🌐 Network: ${process.env.STELLAR_NETWORK || "testnet"}
+  🌐 Network: ${config.network}
   `);
   });
 

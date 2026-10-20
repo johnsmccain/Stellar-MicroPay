@@ -37,7 +37,6 @@ import { getConnectedPublicKey, signTransactionWithWallet } from "@/lib/wallet";
 import { useWallet } from "@/lib/useWallet";
 import { useTranslation } from "@/contexts/I18nContext";
 import { copyToClipboard } from "@/utils/format";
-import { useTranslation } from "@/contexts/I18nContext";
 
 const WIZARD_STEPS = [
   { id: 1, titleKey: "issueToken.assetCode", hintKey: "issueToken.assetCodeStepHint" },

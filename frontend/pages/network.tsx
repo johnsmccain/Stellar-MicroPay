@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Head from "next/head";
 import { fetchNetworkMetrics, type NetworkMetrics } from "@/lib/stellar";
+import { type Translate } from "@/lib/i18n";
 import { useTranslation } from "@/contexts/I18nContext";
 import {
   formatDate,

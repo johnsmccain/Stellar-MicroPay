@@ -7,6 +7,7 @@
 
 const axios = require("axios");
 const usernameService = require("../services/usernameService");
+const { getConfig } = require("../config/env");
 
 /**
  * GET /federation?q=<query>&type=<type>
@@ -62,7 +63,7 @@ async function resolveStellarAddress(stellarAddress) {
   const [username, domain] = parts;
 
   // Check if it's our domain
-  const ourDomain = process.env.DOMAIN || "stellarmicropay.com";
+  const ourDomain = getConfig().domain;
   if (domain === ourDomain) {
     // Local resolution
     const result = usernameService.resolveUsername(username);
@@ -87,7 +88,7 @@ async function resolveAccountId(accountId) {
   const match = allUsernames.find(user => user.publicKey === accountId);
 
   if (match) {
-    const domain = process.env.DOMAIN || "stellarmicropay.com";
+    const domain = getConfig().domain;
     return {
       stellar_address: `${match.username}*${domain}`,
     };

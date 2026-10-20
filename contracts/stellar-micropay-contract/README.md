@@ -19,7 +19,551 @@ The contract is written in Rust and compiled to WebAssembly (WASM) for deploymen
   same operator fee a single `send_tip` would take
 - Placeholder stub for batch payments
 
-- Placeholder stub for batch payments
+## Public API reference
+
+This contract keeps the source of truth in `src/lib.rs`, and the README below is a feature-based summary of the actual public surface.
+
+### Fee model
+
+- Fee is configured by `set_fee_bps` and stored as basis points.
+- `1 bps = 0.01%` and the cap is `500 bps = 5%`.
+- The fee is applied per tip entry, not per transaction, using the same formula as `send_tip`: `floor(amount * fee_bps / 10_000)`.
+- The fee is rounded down to whole units of the token; the admin can never be charged more than the configured rate.
+- Batch tips compute the same fee for each recipient entry independently and reserve the sum before transferring to each recipient.
+
+### Admin and contract lifecycle
+
+#### `initialize(env: Env, admin: Address)`
+- Auth: `admin.require_auth()`.
+- Panics: `Contract already initialized` if the contract has already been initialized.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- initialize \
+  --admin <ADMIN_PUBLIC_KEY>
+```
+
+#### `upgrade(env: Env, new_wasm_hash: BytesN<32>)`
+- Auth: current admin only.
+- Panics: `Contract not initialized` if no admin exists; unauthorized calls fail with host auth errors.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- upgrade \
+  --new_wasm_hash <32_BYTE_HASH>
+```
+
+#### `set_admin(env: Env, new_admin: Address)`
+- Auth: current admin only.
+- Panics: `Contract not initialized` and host auth failures for unauthorized callers.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- set_admin \
+  --new_admin <NEW_ADMIN_PUBLIC_KEY>
+```
+
+#### `freeze(env: Env, admin: Address)`
+- Auth: `admin.require_auth()` and `admin` must match the stored admin.
+- Errors: `ContractError::NotAdmin` is returned when the caller is not the admin.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- freeze \
+  --admin <ADMIN_PUBLIC_KEY>
+```
+
+#### `unfreeze(env: Env, admin: Address)`
+- Auth: `admin.require_auth()` and `admin` must match the stored admin.
+- Errors: `ContractError::NotAdmin` is returned when the caller is not the admin.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- unfreeze \
+  --admin <ADMIN_PUBLIC_KEY>
+```
+
+#### `is_frozen(env: Env) -> bool`
+- Auth: none.
+- Panics: none.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- is_frozen
+```
+
+### Tips and fee controls
+
+#### `send_tip(env: Env, token_address: Address, from: Address, to: Address, amount: i128)`
+- Auth: `from.require_auth()`.
+- Panics: `Tip amount must be positive` for `amount <= 0`; host auth failures if the sender did not authorize; contract may also panic if token transfer fails.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- send_tip \
+  --token_address <XLM_SAC_ADDRESS> \
+  --from <SENDER_ADDRESS> \
+  --to <RECIPIENT_ADDRESS> \
+  --amount 1000000
+```
+
+#### `batch_tip(env: Env, token_address: Address, from: Address, tips: Vec<(Address, i128)>)`
+- Auth: `from.require_auth()` for the whole batch.
+- Panics: `At least one tip is required`, `Batch size exceeds maximum allowed (25 entries)`, `Tip amount must be positive`, `Duplicate tip recipient`, `Tip total overflow`, `Tip fee total overflow`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- batch_tip \
+  --token_address <XLM_SAC_ADDRESS> \
+  --from <SENDER_ADDRESS> \
+  --tips '[[("<RECIPIENT_1>", 5000), ("<RECIPIENT_2>", 10000)]]'
+```
+
+#### `set_fee_bps(env: Env, admin: Address, fee_bps: u32)`
+- Auth: `admin.require_auth()`, and `admin` must match the stored admin.
+- Panics: `Only the admin can set the fee`, `Fee exceeds maximum allowed (500 bps)` when `fee_bps > 500`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- set_fee_bps \
+  --admin <ADMIN_PUBLIC_KEY> \
+  --fee_bps 50
+```
+
+#### `get_fee_bps(env: Env) -> u32`
+- Auth: none.
+- Panics: none.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_fee_bps
+```
+
+#### `get_tip_total(env: Env, recipient: Address) -> i128`
+- Auth: none.
+- Panics: none.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_tip_total \
+  --recipient <RECIPIENT_ADDRESS>
+```
+
+#### `get_tip_count(env: Env, recipient: Address) -> u32`
+- Auth: none.
+- Panics: none.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_tip_count \
+  --recipient <RECIPIENT_ADDRESS>
+```
+
+#### `get_admin(env: Env) -> Address`
+- Auth: none.
+- Panics: `Contract not initialized` if no admin has been set.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_admin
+```
+
+#### `get_tip_record(env: Env, recipient: Address, index: u32) -> TipRecord`
+- Auth: none.
+- Panics: `Tip record not found` when the index has no record.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_tip_record \
+  --recipient <RECIPIENT_ADDRESS> \
+  --index 0
+```
+
+### Receipts
+
+#### `mint_receipt(env: Env, from: Address, to: Address, amount: i128, memo: Symbol) -> u32`
+- Auth: `from.require_auth()`.
+- Panics: `Receipt amount must be positive` for `amount <= 0`; host auth errors for an unauthorized payer.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- mint_receipt \
+  --from <PAYER_ADDRESS> \
+  --to <RECIPIENT_ADDRESS> \
+  --amount 2500000 \
+  --memo "invoice-001"
+```
+
+#### `get_receipt_count(env: Env, payer: Address) -> u32`
+- Auth: none.
+- Panics: none.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_receipt_count \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `get_receipt(env: Env, payer: Address, index: u32) -> ReceiptMetadata`
+- Auth: none.
+- Panics: `Receipt not found` when the index is out of range.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_receipt \
+  --payer <PAYER_ADDRESS> \
+  --index 0
+```
+
+### Escrow
+
+#### `open_escrow(env: Env, payer: Address, recipient: Address, amount: i128, release_ledger: u32) -> u32`
+- Auth: `payer.require_auth()`.
+- Panics: `Escrow amount must be positive`, `Release ledger must be in the future`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- open_escrow \
+  --payer <PAYER_ADDRESS> \
+  --recipient <RECIPIENT_ADDRESS> \
+  --amount 5000000 \
+  --release_ledger 1234567
+```
+
+#### `release_escrow(env: Env, escrow_id: u32) -> i128`
+- Auth: none (anyone may trigger release once the lock expires).
+- Panics: `Escrow not found`, `Escrow already released`, `Escrow was cancelled`, `Escrow is still locked`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- release_escrow \
+  --escrow_id 0
+```
+
+#### `cancel_escrow(env: Env, escrow_id: u32, payer: Address) -> i128`
+- Auth: `payer.require_auth()` and must match the escrow payer.
+- Panics: `Not escrow payer`, `Escrow already released`, `Escrow already cancelled`, `Escrow lock has expired`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- cancel_escrow \
+  --escrow_id 0 \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `get_escrow(env: Env, escrow_id: u32) -> EscrowRecord`
+- Auth: none.
+- Panics: `Escrow not found`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_escrow \
+  --escrow_id 0
+```
+
+### Milestone escrow
+
+#### `create_milestone_escrow(env: Env, token: Address, payer: Address, recipient: Address, amount: i128, approver: Address, dispute_timeout: u32) -> u32`
+- Auth: `payer.require_auth()`.
+- Panics: `Escrow amount must be positive`, `Escrow dispute timeout is out of range` for `dispute_timeout == 0` or `> MAX_DISPUTE_TIMEOUT`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- create_milestone_escrow \
+  --token <XLM_SAC_ADDRESS> \
+  --payer <PAYER_ADDRESS> \
+  --recipient <RECIPIENT_ADDRESS> \
+  --amount 5000000 \
+  --approver <APPROVER_ADDRESS> \
+  --dispute_timeout 500
+```
+
+#### `approve_milestone(env: Env, escrow_id: u32, approver: Address)`
+- Auth: `approver.require_auth()` and `approver` must match the escrow approver.
+- Panics: `Only the designated approver can approve this escrow`, `Escrow is no longer pending`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source carol \
+  --network testnet \
+  -- approve_milestone \
+  --escrow_id 0 \
+  --approver <APPROVER_ADDRESS>
+```
+
+#### `dispute_milestone(env: Env, escrow_id: u32, payer: Address)`
+- Auth: `payer.require_auth()` and payer must match the escrow payer.
+- Panics: `Only the payer can dispute this escrow`, `Escrow is no longer pending`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- dispute_milestone \
+  --escrow_id 0 \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `cancel_milestone_escrow(env: Env, escrow_id: u32, payer: Address)`
+- Auth: `payer.require_auth()` and payer must match the escrow payer.
+- Panics: `Only the payer can cancel this escrow`, `Escrow is not disputed`, `Escrow dispute timeout has not elapsed`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- cancel_milestone_escrow \
+  --escrow_id 0 \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `get_milestone_escrow(env: Env, escrow_id: u32) -> MilestoneEscrowRecord`
+- Auth: none.
+- Panics: `Escrow not found`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_milestone_escrow \
+  --escrow_id 0
+```
+
+#### `get_milestone_escrow_count(env: Env) -> u32`
+- Auth: none.
+- Panics: none.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_milestone_escrow_count
+```
+
+### Streams
+
+#### `open_stream(env: Env, payer: Address, recipient: Address, rate_per_ledger: i128, deposit: i128) -> u32`
+- Auth: `payer.require_auth()`.
+- Panics: `Rate must be positive`, `Deposit must be positive`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- open_stream \
+  --payer <PAYER_ADDRESS> \
+  --recipient <RECIPIENT_ADDRESS> \
+  --rate_per_ledger 10 \
+  --deposit 1000000
+```
+
+#### `claim_stream(env: Env, stream_id: u32, recipient: Address) -> i128`
+- Auth: `recipient.require_auth()`.
+- Panics: `Stream not found`, `Not stream recipient`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source bob \
+  --network testnet \
+  -- claim_stream \
+  --stream_id 0 \
+  --recipient <RECIPIENT_ADDRESS>
+```
+
+#### `top_up_stream(env: Env, stream_id: u32, payer: Address, amount: i128)`
+- Auth: `payer.require_auth()` and payer must match the stream payer.
+- Panics: `Top-up amount must be positive`, `Stream not found`, `Not stream payer`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- top_up_stream \
+  --stream_id 0 \
+  --payer <PAYER_ADDRESS> \
+  --amount 1000000
+```
+
+#### `close_stream(env: Env, stream_id: u32, payer: Address) -> i128`
+- Auth: `payer.require_auth()` and payer must match the stream payer.
+- Panics: `Stream not found`, `Not stream payer`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- close_stream \
+  --stream_id 0 \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `pause_stream(env: Env, stream_id: u32, payer: Address)`
+- Auth: `payer.require_auth()` and payer must match the stream payer.
+- Panics: `Stream not found`, `Not stream payer`, `Stream already paused`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- pause_stream \
+  --stream_id 0 \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `resume_stream(env: Env, stream_id: u32, payer: Address)`
+- Auth: `payer.require_auth()` and payer must match the stream payer.
+- Panics: `Stream not found`, `Not stream payer`, `Stream is not paused`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- resume_stream \
+  --stream_id 0 \
+  --payer <PAYER_ADDRESS>
+```
+
+#### `get_stream(env: Env, stream_id: u32) -> Stream`
+- Auth: none.
+- Panics: `Stream not found`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_stream \
+  --stream_id 0
+```
+
+#### `get_claimable(env: Env, stream_id: u32) -> i128`
+- Auth: none.
+- Panics: `Stream not found`.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- get_claimable \
+  --stream_id 0
+```
+
+### Batch payments placeholder
+
+#### `batch_send(env: Env, _from: Address, _recipients: Vec<Address>, _amounts: Vec<i128>)`
+- Auth: none at present because this is an intentionally unimplemented placeholder.
+- Panics: `Recipient and amount vectors must have the same length`, `At least one payment is required`, `Batch size exceeds maximum allowed (25 entries)`, and the final `Batch payments coming in v2.0 — see ROADMAP.md` panic once the validation passes.
+- Example:
+
+```bash
+stellar contract invoke \
+  --id <CONTRACT_ID> \
+  --source alice \
+  --network testnet \
+  -- batch_send \
+  --from <PAYER_ADDRESS> \
+  --recipients '["<RECIPIENT_1>", "<RECIPIENT_2>"]' \
+  --amounts '[5000, 10000]'
+```
 
 ## Prerequisites
 

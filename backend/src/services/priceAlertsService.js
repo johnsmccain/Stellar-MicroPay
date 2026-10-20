@@ -7,12 +7,7 @@
 
 const axios = require("axios");
 const logger = require("../utils/logger");
-
-// In-memory storage for price alerts
-// Structure: Map<publicKey, Alert[]>
-const alertsByUser = new Map();
-
-let alertIdCounter = 1;
+const store = require("../storage/priceAlertsStore");
 
 // Alert record structure:
 // { id, publicKey, asset, direction, targetPrice, triggered, createdAt }
@@ -36,7 +31,7 @@ function createPriceAlert({ publicKey, asset, direction, targetPrice }) {
   }
 
   const alert = {
-    id: alertIdCounter++,
+    id: store.nextId(),
     publicKey,
     asset: asset.toUpperCase(),
     direction,
@@ -45,11 +40,7 @@ function createPriceAlert({ publicKey, asset, direction, targetPrice }) {
     createdAt: new Date().toISOString(),
   };
 
-  if (!alertsByUser.has(publicKey)) {
-    alertsByUser.set(publicKey, []);
-  }
-
-  alertsByUser.get(publicKey).push(alert);
+  store.add(alert);
 
   logger.info({ alertId: alert.id, publicKey, asset, direction, targetPrice }, "Price alert created");
 
@@ -68,7 +59,7 @@ function getPriceAlerts(publicKey) {
     throw error;
   }
 
-  return alertsByUser.get(publicKey) || [];
+  return store.getByUser(publicKey);
 }
 
 /**
@@ -83,13 +74,9 @@ function deletePriceAlert(id) {
     throw error;
   }
 
-  for (const alerts of alertsByUser.values()) {
-    const index = alerts.findIndex((a) => a.id === alertId);
-    if (index !== -1) {
-      alerts.splice(index, 1);
-      logger.info({ alertId }, "Price alert deleted");
-      return;
-    }
+  if (store.remove(alertId)) {
+    logger.info({ alertId }, "Price alert deleted");
+    return;
   }
 
   const error = new Error("Alert not found");
@@ -132,30 +119,25 @@ async function checkAlerts() {
 
   const triggeredAlerts = [];
 
-  for (const alerts of alertsByUser.values()) {
-    for (const alert of alerts) {
-      if (alert.triggered) continue; // Skip already triggered alerts
-      if (alert.asset !== "XLM") continue; // Only XLM supported for now
+  for (const alert of store.getAll()) {
+    if (alert.triggered) continue;
+    if (alert.asset !== "XLM") continue;
 
-      let shouldTrigger = false;
+    let shouldTrigger = false;
 
-      if (alert.direction === "above" && currentPrice > alert.targetPrice) {
-        shouldTrigger = true;
-      } else if (alert.direction === "below" && currentPrice < alert.targetPrice) {
-        shouldTrigger = true;
-      }
+    if (alert.direction === "above" && currentPrice > alert.targetPrice) {
+      shouldTrigger = true;
+    } else if (alert.direction === "below" && currentPrice < alert.targetPrice) {
+      shouldTrigger = true;
+    }
 
-      if (shouldTrigger) {
-        alert.triggered = true;
-        triggeredAlerts.push({
-          ...alert,
-          currentPrice,
-        });
-        logger.info(
-          { alertId: alert.id, publicKey: alert.publicKey, targetPrice: alert.targetPrice, currentPrice },
-          "Price alert triggered"
-        );
-      }
+    if (shouldTrigger) {
+      store.update(alert.id, { triggered: true });
+      triggeredAlerts.push({ ...alert, triggered: true, currentPrice });
+      logger.info(
+        { alertId: alert.id, publicKey: alert.publicKey, targetPrice: alert.targetPrice, currentPrice },
+        "Price alert triggered"
+      );
     }
   }
 
@@ -166,11 +148,7 @@ async function checkAlerts() {
  * Get all alerts (for testing/internal use).
  */
 function getAllAlerts() {
-  const all = [];
-  for (const alerts of alertsByUser.values()) {
-    all.push(...alerts);
-  }
-  return all;
+  return store.getAll();
 }
 
 module.exports = {

@@ -1,5 +1,5 @@
 /**
- * backend/__tests__/mockHorizonFailureInjection.test.js
+ * mock-horizon/__tests__/mockHorizonFailureInjection.test.js
  * End-to-end integration test demonstrating mock Horizon failure injection
  * (latency, error-rate injection 504/429, rate-limit headers, and submission result codes).
  *
@@ -9,7 +9,7 @@
 "use strict";
 
 const request = require("supertest");
-const { createMockHorizonApp } = require("../../mock-horizon/server");
+const { createMockHorizonApp } = require("../server");
 
 describe("Mock Horizon Failure Injection End-to-End (#1419)", () => {
   let app;

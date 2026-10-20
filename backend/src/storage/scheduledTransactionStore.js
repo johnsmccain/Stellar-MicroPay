@@ -14,14 +14,9 @@
 
 const fs = require("fs");
 const path = require("path");
+const { getConfig } = require("../config/env");
 
-const DEFAULT_DATA_FILE = path.join(
-  __dirname,
-  "..",
-  "..",
-  "data",
-  "scheduled_transactions.json"
-);
+const DEFAULT_DATA_FILE = getConfig().scheduledTxDataFile;
 
 function safeParseJson(raw) {
   try {
@@ -38,10 +33,7 @@ function safeParseJson(raw) {
  * @param {string} [options.dataFile] Custom path to the store file
  */
 function createScheduledTransactionStore(options = {}) {
-  const dataFile =
-    options.dataFile ||
-    process.env.SCHEDULED_TX_DATA_FILE ||
-    DEFAULT_DATA_FILE;
+  const dataFile = options.dataFile || getConfig().scheduledTxDataFile;
 
   const store = {
     dataFile,

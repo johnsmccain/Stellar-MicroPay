@@ -59,7 +59,7 @@ test('trade: executes a swap transaction', async ({ page }) => {
         body: JSON.stringify({ _embedded: { records: [] } }),
       });
     } else {
-      route.passthrough();
+      route.fallback();
     }
   });
 

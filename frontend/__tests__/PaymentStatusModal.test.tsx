@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import PaymentStatusModal, { PaymentFlowStatus, PaymentStepId, PaymentStepTiming } from '../components/PaymentStatusModal';
+import PaymentStatusModal, { PaymentFlowStatus, PaymentStepId, PaymentStepTiming } from '@/components/PaymentStatusModal';
 
 const createStepTimings = (overrides: Partial<Record<PaymentStepId, PaymentStepTiming>> = {}): Record<PaymentStepId, PaymentStepTiming> => {
   const defaultTiming: PaymentStepTiming = { startedAt: null, completedAt: null, error: null };

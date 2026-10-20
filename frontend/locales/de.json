@@ -9,7 +9,8 @@
     "continue": "Weiter",
     "copy": "Kopieren",
     "copied": "Kopiert!",
-    "unavailable": "Nicht verfügbar"
+    "unavailable": "Nicht verfügbar",
+    "skipToContent": "Zum Hauptinhalt springen"
   },
   "navbar": {
     "home": "Startseite",
@@ -294,7 +295,24 @@
     "transactionSpeed": "Transaktionsgeschwindigkeit",
     "useAddress": "Adresse verwenden",
     "copyTxHash": "Transaktions-Hash kopieren",
-    "removeRecipient": "Empfänger entfernen"
+    "removeRecipient": "Empfänger entfernen",
+    "assetLabel": "Vermögenswert",
+    "customAsset": "Benutzerdefiniert",
+    "assetCode": "Asset-Code",
+    "assetIssuer": "Asset-Emittent",
+    "selectAsset": "Vermögenswert auswählen",
+    "amountLabel": "Betrag",
+    "balance": "Guthaben",
+    "insufficientBalance": "Unzureichendes Guthaben",
+    "memoTypeText": "Text",
+    "memoTypeHash": "Hash",
+    "memoLabel": "Memo",
+    "memoTemplates": "Vorlagen",
+    "recipientLabel": "Empfänger",
+    "recipientPlaceholder": "G... oder @Benutzer",
+    "resolving": "Wird aufgelöst…",
+    "invalidAddress": "Ungültige Adresse",
+    "pickContact": "Kontakt auswählen"
   },
   "walletHealth": {
     "healthy": "Dein Konto ist in gutem Zustand",
@@ -674,6 +692,7 @@
     "howFastIsIt": "Wie schnell ist es?",
     "howMuchDoesItCost": "Wie viel kostet es?",
     "isItSafe": "Ist es sicher?",
+    "loadingConnectPanel": "Verbindungsoptionen werden geladen…",
     "networkDocs": "Netzwerk-Doku",
     "officialAccountDocs": "offizielle Kontodoku",
     "officialTransactionDocs": "offizielle Transaktionsdoku",
@@ -1357,6 +1376,56 @@
     "unknown": {
       "message": "Ledger-Fehler: {detail}",
       "recovery": "Verbinde deinen Ledger neu, öffne die Stellar-App und versuche es erneut."
+    }
+  },
+  "routeAnnouncer": {
+    "navigatedTo": "Navigiert zu {title}"
+  },
+  "pages": {
+    "home": {
+      "title": "Startseite | Stellar MicroPay"
+    },
+    "notFound": {
+      "title": "Seite nicht gefunden | Stellar MicroPay"
+    },
+    "contacts": {
+      "title": "Kontakte | Stellar MicroPay"
+    },
+    "issueToken": {
+      "title": "Token ausgeben | Stellar MicroPay"
+    },
+    "multiSigSign": {
+      "title": "Mehrfachsignatur | Stellar MicroPay"
+    },
+    "network": {
+      "title": "Netzwerk | Stellar MicroPay"
+    },
+    "pay": {
+      "title": "Bezahlen | Stellar MicroPay"
+    },
+    "request": {
+      "title": "Anfragen | Stellar MicroPay"
+    },
+    "scheduledPayments": {
+      "title": "Geplante Zahlungen | Stellar MicroPay",
+      "heading": "Geplante Zahlungen"
+    },
+    "settings": {
+      "title": "Einstellungen | Stellar MicroPay"
+    },
+    "streams": {
+      "title": "Streaming-Zahlungen | Stellar MicroPay",
+      "heading": "Streaming-Zahlungen"
+    },
+    "tip": {
+      "title": "Trinkgeld für {username} | Stellar MicroPay",
+      "fallbackTitle": "Trinkgeld | Stellar MicroPay"
+    },
+    "trade": {
+      "title": "Handel | Stellar MicroPay"
+    },
+    "transactions": {
+      "title": "Transaktionen | Stellar MicroPay"
     }
   }
 }

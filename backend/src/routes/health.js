@@ -9,13 +9,14 @@
 const express = require("express");
 const router = express.Router();
 const { getCircuitStatus } = require("../middleware/horizonCircuitBreaker");
+const { getConfig } = require("../config/env");
 
 router.get("/", (req, res) => {
   const circuit = getCircuitStatus();
   res.json({
     status: "ok",
     service: "stellar-micropay-api",
-    network: process.env.STELLAR_NETWORK || "testnet",
+    network: getConfig().network,
     timestamp: new Date().toISOString(),
     horizon: {
       circuitState: circuit.state,
@@ -26,7 +27,7 @@ router.get("/", (req, res) => {
 });
 
 router.get("/ready", async (req, res) => {
-  const url = (process.env.HORIZON_URL || "https://horizon-testnet.stellar.org").replace(/\/$/, "");
+  const url = getConfig().horizonUrl.replace(/\/$/, "");
   const ok = await fetch(`${url}/`, { signal: AbortSignal.timeout(3000) }).then((r) => r.ok).catch(() => false);
   res.status(ok ? 200 : 503).json(ok ? { status: "ok", horizon: "reachable" } : { status: "degraded", horizon: "unreachable" });
 });

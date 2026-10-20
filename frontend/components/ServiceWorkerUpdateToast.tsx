@@ -89,7 +89,7 @@ export default function ServiceWorkerUpdateToast() {
         if (cancelled) return;
         if (existing) {
           observeRegistration(existing);
-          return existing;
+          return;
         }
         return navigator.serviceWorker
           .register("/sw.js")

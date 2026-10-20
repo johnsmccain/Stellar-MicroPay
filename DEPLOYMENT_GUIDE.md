@@ -207,7 +207,7 @@ stellar contract invoke \
 
 ### 1. Fork the Repository
 
-1. Go to the original repository: https://github.com/omolobamoyinoluwa-max/Stellar-MicroPay
+1. Go to the canonical repository: https://github.com/Emmy123222/Stellar-MicroPay
 2. Click "Fork" to create your own copy
 3. Clone your fork locally:
    ```bash

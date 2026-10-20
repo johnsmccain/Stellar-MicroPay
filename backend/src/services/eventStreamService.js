@@ -20,9 +20,7 @@
 
 const { SorobanRpc, scValToNative } = require("@stellar/stellar-sdk");
 require("dotenv").config();
-
-const DEFAULT_TESTNET_RPC = "https://soroban-testnet.stellar.org";
-const DEFAULT_MAINNET_RPC = "https://soroban.stellar.org";
+const { getConfig } = require("../config/env");
 
 /** Stroops per XLM — Soroban i128 amounts are stroops. */
 const STROOPS_PER_XLM = 10_000_000;
@@ -53,23 +51,17 @@ const EVENT_TYPE_ALIASES = {
 
 /** Active Stellar network, e.g. `testnet` or `mainnet`. */
 function getNetwork() {
-  return process.env.STELLAR_NETWORK || "testnet";
+  return getConfig().network;
 }
 
 /** Soroban RPC endpoint for the active network. */
 function getRpcUrl() {
-  if (process.env.SOROBAN_RPC_URL) return process.env.SOROBAN_RPC_URL;
-  return getNetwork() === "mainnet" ? DEFAULT_MAINNET_RPC : DEFAULT_TESTNET_RPC;
+  return getConfig().sorobanRpcUrl;
 }
 
 /** Deployed MicroPay contract ID, or `""` when not configured. */
 function getContractId() {
-  return (
-    process.env.CONTRACT_ID ||
-    process.env.SOROBAN_CONTRACT_ID ||
-    process.env.NEXT_PUBLIC_CONTRACT_ID ||
-    ""
-  );
+  return getConfig().contractId;
 }
 
 /**
@@ -81,8 +73,8 @@ function getEventStreamConfig() {
     contractId: getContractId(),
     network: getNetwork(),
     rpcUrl: getRpcUrl(),
-    pollIntervalMs: Number(process.env.EVENTS_POLL_INTERVAL_MS || 5000),
-    ledgerLookback: Number(process.env.EVENTS_LEDGER_LOOKBACK || 20),
+    pollIntervalMs: getConfig().eventPollIntervalMs,
+    ledgerLookback: getConfig().eventsLedgerLookback,
     configured: Boolean(getContractId()),
   };
 }

@@ -16,10 +16,9 @@
 const express = require("express");
 const router = express.Router();
 const eventStreamService = require("../services/eventStreamService");
+const { getConfig } = require("../config/env");
 
-const HEARTBEAT_INTERVAL_MS = Number(
-  process.env.EVENTS_HEARTBEAT_INTERVAL_MS || 15000
-);
+const HEARTBEAT_INTERVAL_MS = getConfig().eventsHeartbeatIntervalMs;
 
 /** Max events requested from Soroban RPC per poll (RPC caps this at 200). */
 const MAX_EVENTS_PER_POLL = 100;

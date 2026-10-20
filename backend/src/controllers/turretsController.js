@@ -152,5 +152,4 @@ module.exports = {
   pause,
   resume,
   cancel,
-  createDca,
 };

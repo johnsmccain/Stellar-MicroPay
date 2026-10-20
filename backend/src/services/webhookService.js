@@ -2,8 +2,8 @@
 
 const crypto = require("crypto");
 const { sanitizeWebhookUrl } = require("./webhookUrl");
+const store = require("../storage/webhookStore");
 
-const webhooks = new Map();
 const RETRY_DELAYS_MS = [250, 500, 1000];
 
 function register({ url, publicKey, secret }) {
@@ -22,12 +22,12 @@ function register({ url, publicKey, secret }) {
   }
 
   const webhook = { id: crypto.randomUUID(), url: safeUrl, publicKey, secret, createdAt: new Date().toISOString() };
-  webhooks.set(webhook.id, webhook);
+  store.set(webhook.id, webhook);
   return { id: webhook.id, url: webhook.url, publicKey: webhook.publicKey, createdAt: webhook.createdAt };
 }
 
 function remove(id) {
-  return webhooks.delete(id);
+  return store.remove(id);
 }
 
 function signature(secret, body) {
@@ -42,6 +42,7 @@ async function deliver(webhook, payload, fetchImpl = fetch) {
     try {
       const response = await fetchImpl(target, {
         method: "POST",
+        redirect: "error",
         headers: {
           "content-type": "application/json",
           "x-stellar-micropay-signature": signature(webhook.secret, body),
@@ -62,7 +63,7 @@ async function deliver(webhook, payload, fetchImpl = fetch) {
 
 async function publishPayment(payment, fetchImpl = fetch) {
   const deliveries = [];
-  for (const webhook of webhooks.values()) {
+  for (const webhook of store.getAll()) {
     if (webhook.publicKey !== payment.senderPublicKey && webhook.publicKey !== payment.creatorPublicKey) continue;
     const direction = webhook.publicKey === payment.senderPublicKey ? "sent" : "received";
     deliveries.push(deliver(webhook, { type: `payment.${direction}`, direction, payment }, fetchImpl));
@@ -70,7 +71,7 @@ async function publishPayment(payment, fetchImpl = fetch) {
   return Promise.allSettled(deliveries);
 }
 
-function clear() { webhooks.clear(); }
+function clear() { for (const wh of store.getAll()) store.remove(wh.id); }
 
 module.exports = {
   register,
