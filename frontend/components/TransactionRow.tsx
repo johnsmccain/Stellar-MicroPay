@@ -272,6 +272,24 @@ function TransactionRowInner({
 }
 
 /**
+ * Compare two receipt-hash maps by value.
+ *
+ * The map is rebuilt (as a fresh object literal) on every parent render, so
+ * comparing it by reference would defeat the memo comparator and re-render
+ * every row on every parent update.
+ */
+function sameReceiptHashes(
+  prev: Record<string, number>,
+  next: Record<string, number>
+): boolean {
+  if (prev === next) return true;
+  const prevKeys = Object.keys(prev);
+  const nextKeys = Object.keys(next);
+  if (prevKeys.length !== nextKeys.length) return false;
+  return prevKeys.every((key) => prev[key] === next[key]);
+}
+
+/**
  * Custom memo comparator.
  * Re-renders when any data field visible to the user changes.
  * Callback props are intentionally excluded — they are stabilised with
@@ -297,7 +315,7 @@ export function areEqual(prev: TransactionRowProps, next: TransactionRowProps): 
     prev.isEditingNote === next.isEditingNote &&
     prev.noteInputValue === next.noteInputValue &&
     prev.mintingReceiptHash === next.mintingReceiptHash &&
-    prev.mintedReceiptHashes === next.mintedReceiptHashes
+    sameReceiptHashes(prev.mintedReceiptHashes, next.mintedReceiptHashes)
   );
 }
 

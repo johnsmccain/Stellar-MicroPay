@@ -36,9 +36,12 @@ function validateSubmitBody(req, res, next) {
 }
 
 function validateBroadcastBody(req, res, next) {
-  const { signedXdr } = req.body || {};
-  if (!signedXdr || typeof signedXdr !== "string" || !signedXdr.trim())
-    return res.status(400).json({ success: false, error: "signedXdr is required" });
+  // The field name matches the one `paymentController.submitSignedTransaction`
+  // reads (`signedXDR`), so a body that passes validation is the same body the
+  // controller acts on.
+  const { signedXDR } = req.body || {};
+  if (!signedXDR || typeof signedXDR !== "string" || !signedXDR.trim())
+    return res.status(400).json({ success: false, error: "signedXDR is required" });
   next();
 }
 

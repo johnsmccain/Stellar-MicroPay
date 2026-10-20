@@ -44,26 +44,6 @@ const AIPaymentAssistant = dynamic(() => import("@/components/AIPaymentAssistant
   loading: () => <AiAssistantLoading />,
 });
 
-const MonthlySpendingChart = dynamic(
-  () => import("@/components/DashboardCharts").then((mod) => mod.MonthlySpendingChart),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="card mb-6 h-[350px] animate-pulse bg-white/[0.03] border-white/10" />
-    ),
-  }
-);
-
-const ThirtyDayVolumeChart = dynamic(
-  () => import("@/components/DashboardCharts").then((mod) => mod.ThirtyDayVolumeChart),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="card mb-6 h-[280px] animate-pulse bg-white/[0.03] border-white/10" />
-    ),
-  }
-);
-
 // recharts is only needed by the two analytics widgets below the wallet summary,
 // so both charts come from one module that the page fetches asynchronously: the
 // charting library then lands in its own chunk instead of the dashboard's
@@ -545,7 +525,7 @@ export default function Dashboard({ stellarURI }: DashboardProps) {
         setRefreshKey((k) => k + 1);
       }
     },
-    []
+    [t]
   );
 
   const startPollingFallback = useCallback(() => {
@@ -725,7 +705,7 @@ export default function Dashboard({ stellarURI }: DashboardProps) {
     } finally {
       setPaymentStatsLoading(false);
     }
-  }, [publicKey]);
+  }, [publicKey, t]);
 
   const fetchSpendingHistory = useCallback(async () => {
     if (!publicKey) return;

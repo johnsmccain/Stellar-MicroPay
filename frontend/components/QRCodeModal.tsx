@@ -65,7 +65,7 @@ export default function QRCodeModal({ isOpen, onClose, publicKey, amount }: Read
         </h3>
         <button
           onClick={onClose}
-          aria-label={t("common.close")}
+          aria-label={t("qrCode.closeAria")}
           className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5"
         >
           <CloseIcon className="w-5 h-5" />

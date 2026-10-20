@@ -99,6 +99,11 @@ type FavouriteEntry = {
 };
 
 const ESTIMATED_NETWORK_FEE = `${STELLAR_BASE_FEE_XLM} XLM`;
+// Static XLM/USD rate used for the fiat estimate shown in the confirmation
+// modal. The live rate lives in `lib/price.ts`, but the modal renders
+// synchronously, so it falls back to this constant instead of showing a
+// placeholder.
+const XLM_USD_RATE = 0.11;
 const FAVOURITES_STORAGE_KEY = "stellar-micropay:favourites";
 
 interface BarcodeDetectorResult {
@@ -613,7 +618,7 @@ export default function SendPaymentForm({
         clearTimeout(snsDebounceRef.current);
       }
     };
-  }, [destination]);
+  }, [destination, t]);
 
   const handleUseSNSAddress = () => {
     if (snsResolvedAddress) {
@@ -669,7 +674,7 @@ export default function SendPaymentForm({
         clearTimeout(federationDebounceRef.current);
       }
     };
-  }, [destination]);
+  }, [destination, t]);
 
   const handleUseFederationAddress = () => {
     if (federationResolvedAddress) {
@@ -1532,6 +1537,7 @@ export default function SendPaymentForm({
         memo={memo}
         memoType={memoType}
         estimatedFee={ESTIMATED_NETWORK_FEE}
+        usdValue={amountNum * XLM_USD_RATE}
         isTipOnChain={isTipOnChain}
         onCancel={() => setIsConfirmOpen(false)}
         onConfirm={() => { setIsConfirmOpen(false); executeSend(); }}

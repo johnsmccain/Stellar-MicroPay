@@ -9,7 +9,8 @@
     "continue": "Continuer",
     "copy": "Copier",
     "copied": "Copié !",
-    "unavailable": "Indisponible"
+    "unavailable": "Indisponible",
+    "skipToContent": "Aller au contenu principal"
   },
   "navbar": {
     "home": "Accueil",
@@ -294,7 +295,24 @@
     "transactionSpeed": "Vitesse de la transaction",
     "useAddress": "Utiliser l’adresse",
     "copyTxHash": "Copier le hachage de transaction",
-    "removeRecipient": "Supprimer le destinataire"
+    "removeRecipient": "Supprimer le destinataire",
+    "assetLabel": "Actif",
+    "customAsset": "Personnalisé",
+    "assetCode": "Code de l'actif",
+    "assetIssuer": "Émetteur de l'actif",
+    "selectAsset": "Sélectionner l'actif",
+    "amountLabel": "Montant",
+    "balance": "Solde",
+    "insufficientBalance": "Solde insuffisant",
+    "memoTypeText": "Texte",
+    "memoTypeHash": "Hash",
+    "memoLabel": "Mémo",
+    "memoTemplates": "Modèles",
+    "recipientLabel": "Destinataire",
+    "recipientPlaceholder": "G... ou @utilisateur",
+    "resolving": "Résolution…",
+    "invalidAddress": "Adresse invalide",
+    "pickContact": "Choisir un contact"
   },
   "walletHealth": {
     "healthy": "Ton compte est en bonne santé",
@@ -1358,6 +1376,56 @@
     "unknown": {
       "message": "Erreur Ledger : {detail}",
       "recovery": "Reconnectez votre Ledger, ouvrez l'application Stellar et réessayez."
+    }
+  },
+  "routeAnnouncer": {
+    "navigatedTo": "Navigué vers {title}"
+  },
+  "pages": {
+    "home": {
+      "title": "Accueil | Stellar MicroPay"
+    },
+    "notFound": {
+      "title": "Page introuvable | Stellar MicroPay"
+    },
+    "contacts": {
+      "title": "Contacts | Stellar MicroPay"
+    },
+    "issueToken": {
+      "title": "Émettre un token | Stellar MicroPay"
+    },
+    "multiSigSign": {
+      "title": "Signature multiple | Stellar MicroPay"
+    },
+    "network": {
+      "title": "Réseau | Stellar MicroPay"
+    },
+    "pay": {
+      "title": "Payer | Stellar MicroPay"
+    },
+    "request": {
+      "title": "Demander | Stellar MicroPay"
+    },
+    "scheduledPayments": {
+      "title": "Paiements planifiés | Stellar MicroPay",
+      "heading": "Paiements planifiés"
+    },
+    "settings": {
+      "title": "Paramètres | Stellar MicroPay"
+    },
+    "streams": {
+      "title": "Paiements en streaming | Stellar MicroPay",
+      "heading": "Paiements en streaming"
+    },
+    "tip": {
+      "title": "Pourboire à {username} | Stellar MicroPay",
+      "fallbackTitle": "Pourboire | Stellar MicroPay"
+    },
+    "trade": {
+      "title": "Échange | Stellar MicroPay"
+    },
+    "transactions": {
+      "title": "Transactions | Stellar MicroPay"
     }
   }
 }

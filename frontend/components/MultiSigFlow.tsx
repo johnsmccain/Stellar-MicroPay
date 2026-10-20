@@ -141,8 +141,11 @@ export default function MultiSigFlow({ publicKey, xlmBalance, onSuccess }: Multi
       {step === "build" && (
         <div className="space-y-4">
           <div>
-            <label className="label">{t("multiSig.recipientAddress")}</label>
+            <label className="label" htmlFor="multi-sig-recipient">
+              {t("multiSig.recipientAddress")}
+            </label>
             <input
+              id="multi-sig-recipient"
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
@@ -151,8 +154,11 @@ export default function MultiSigFlow({ publicKey, xlmBalance, onSuccess }: Multi
             />
           </div>
           <div>
-            <label className="label">{t("multiSig.amountLabel")}</label>
+            <label className="label" htmlFor="multi-sig-amount">
+              {t("multiSig.amountLabel")}
+            </label>
             <input
+              id="multi-sig-amount"
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -163,8 +169,11 @@ export default function MultiSigFlow({ publicKey, xlmBalance, onSuccess }: Multi
             />
           </div>
           <div>
-            <label className="label">{t("multiSig.memoLabel")}</label>
+            <label className="label" htmlFor="multi-sig-memo">
+              {t("multiSig.memoLabel")}
+            </label>
             <input
+              id="multi-sig-memo"
               type="text"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
@@ -173,8 +182,11 @@ export default function MultiSigFlow({ publicKey, xlmBalance, onSuccess }: Multi
             />
           </div>
           <div>
-            <label className="label">{t("multiSig.thresholdLabel")}</label>
+            <label className="label" htmlFor="multi-sig-threshold">
+              {t("multiSig.thresholdLabel")}
+            </label>
             <input
+              id="multi-sig-threshold"
               type="number"
               value={threshold}
               onChange={(e) => setThreshold(parseInt(e.target.value) || 2)}
@@ -234,8 +246,11 @@ export default function MultiSigFlow({ publicKey, xlmBalance, onSuccess }: Multi
             </ul>
           )}
           <div>
-            <label className="label">{t("multiSig.pasteSignedXdr")}</label>
+            <label className="label" htmlFor="multi-sig-signed-xdr">
+              {t("multiSig.pasteSignedXdr")}
+            </label>
             <textarea
+              id="multi-sig-signed-xdr"
               value={newSignedXDR}
               onChange={(e) => setNewSignedXDR(e.target.value)}
               placeholder="AAAA..."

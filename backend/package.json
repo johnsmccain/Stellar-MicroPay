@@ -29,6 +29,8 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "babel-jest": "^30.5.2",
     "eslint": "^8.57.0",
     "eslint-plugin-rulesdir": "^0.2.2",
     "jest": "^30.5.1",
@@ -67,7 +69,8 @@
           "tsconfig": "<rootDir>/tsconfig.json",
           "diagnostics": false
         }
-      ]
+      ],
+      "^.+\\.jsx?$": "babel-jest"
     },
     "moduleNameMapper": {
       "^@nestjs/common$": "<rootDir>/__mocks__/@nestjs/common.ts",

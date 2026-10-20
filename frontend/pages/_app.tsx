@@ -171,7 +171,7 @@ function AppShell({
 
   return (
     <>
-        <a href="#main-content" className="sr-only focus:not-sr-only fixed top-4 left-4 bg-white dark:bg-black text-black dark:text-white p-2 rounded z-50">Skip to main content</a>
+        <a href="#main-content" className="sr-only focus:not-sr-only fixed top-4 left-4 bg-white dark:bg-black text-black dark:text-white p-2 rounded z-50">{t("common.skipToContent")}</a>
       <OfflineBanner />
       <div className="min-h-screen bg-white bg-grid transition-colors duration-300 dark:bg-cosmos-900">
         <Navbar onOpenAssistant={() => setIsAssistantOpen(true)} />

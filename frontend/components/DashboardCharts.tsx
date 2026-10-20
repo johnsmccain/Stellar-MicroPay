@@ -1,11 +1,5 @@
 /**
  * components/DashboardCharts.tsx
- * Isolated chart components using Recharts for the Dashboard.
- * Extracted so recharts can be lazily loaded via next/dynamic with { ssr: false },
- * keeping the heavy charting library out of the initial bundle.
- */
-
-import React from "react";
  *
  * The recharts-powered dashboard widgets, kept out of `pages/dashboard.tsx` so
  * the charting library is not part of the dashboard's initial bundle. The page
@@ -26,25 +20,18 @@ import {
 } from "recharts";
 import { useTranslation } from "@/contexts/I18nContext";
 
-export interface MonthlySpendingData {
-  month: string;
-  sent: number;
-  received: number;
-  label?: string;
-}
-
-export interface MonthlySpendingChartProps {
-  data: MonthlySpendingData[];
-  loading: boolean;
-  onBarClick: (data: any) => void;
-}
-
-/** One bar in the monthly spending chart. */
+/**
+ * One bar in the monthly spending chart.
+ *
+ * `monthIndex`, `year` and `label` are optional so a caller that only knows
+ * the month name can hand the chart a plain `{ month, sent, received }` row
+ * (#1152) without having to invent the derived fields.
+ */
 export interface MonthlySpendingPoint {
   month: string;
-  monthIndex: number;
-  year: number;
-  label: string;
+  monthIndex?: number;
+  year?: number;
+  label?: string;
   sent: number;
   received: number;
 }
@@ -52,7 +39,7 @@ export interface MonthlySpendingPoint {
 /** One bar in the 30-day volume chart. */
 export interface ThirtyDayVolumePoint {
   day: string;
-  dateKey: string;
+  dateKey?: string;
   sent: number;
   received: number;
 }
@@ -76,7 +63,6 @@ export function MonthlySpendingChart({
   data,
   loading,
   onBarClick,
-}: MonthlySpendingChartProps) {
 }: {
   data: MonthlySpendingPoint[];
   loading: boolean;
@@ -99,11 +85,6 @@ export function MonthlySpendingChart({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            onClick={(state: any) =>
-              state &&
-              state.activePayload &&
-              onBarClick(state.activePayload[0].payload)
-            }
             onClick={(state) => {
               // `activeTooltipIndex` is the index of the column the pointer is
               // over, so a click anywhere in the column selects that month.
@@ -116,7 +97,6 @@ export function MonthlySpendingChart({
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
               tick={AXIS_TICK}
             />
             <YAxis
@@ -124,16 +104,6 @@ export function MonthlySpendingChart({
               tickLine={false}
               tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickFormatter={(value: any) => `${value}`}
-            />
-            <Tooltip
-              cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
-              contentStyle={{
-                backgroundColor: "#0f172a",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "8px",
-              }}
-              tick={AXIS_TICK}
-              tickFormatter={(value) => `${value}`}
             />
             <Tooltip
               cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
@@ -148,19 +118,6 @@ export function MonthlySpendingChart({
   );
 }
 
-export interface ThirtyDayVolumeData {
-  day: string;
-  sent: number;
-  received: number;
-  [key: string]: any;
-}
-
-export interface ThirtyDayVolumeChartProps {
-  data: ThirtyDayVolumeData[];
-  loading: boolean;
-}
-
-export function ThirtyDayVolumeChart({ data, loading }: ThirtyDayVolumeChartProps) {
 export function ThirtyDayVolumeChart({
   data,
   loading,
@@ -172,7 +129,6 @@ export function ThirtyDayVolumeChart({
   if (loading && data.length === 0) {
     return <div className="card mb-6 h-[280px] animate-pulse bg-white/[0.03] border-white/10" />;
   }
-  const visibleData = data.filter((_: any, i: number) => i % 5 === 0 || i === data.length - 1);
   const visibleData = data.filter((_, i) => i % 5 === 0 || i === data.length - 1);
   return (
     <div className="card mb-6 overflow-hidden">
@@ -186,7 +142,6 @@ export function ThirtyDayVolumeChart({
               axisLine={false}
               tickLine={false}
               tick={{ fill: "#94a3b8", fontSize: 11 }}
-              ticks={visibleData.map((d: any) => d.day)}
               ticks={visibleData.map((d) => d.day)}
               interval="preserveStartEnd"
             />
@@ -197,7 +152,6 @@ export function ThirtyDayVolumeChart({
             />
             <Tooltip
               cursor={{ fill: "rgba(255,255,255,0.05)" }}
-              contentStyle={{ backgroundColor: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px" }}
               contentStyle={TOOLTIP_STYLE}
               itemStyle={{ color: "#38bdf8" }}
             />
@@ -210,18 +164,6 @@ export function ThirtyDayVolumeChart({
   );
 }
 
-export interface BalanceHistoryDataPoint {
-  date: string;
-  balance: number;
-  timestamp: number;
-}
-
-export interface BalanceHistoryChartProps {
-  data: BalanceHistoryDataPoint[];
-  loading: boolean;
-}
-
-export function BalanceHistoryChart({ data, loading }: BalanceHistoryChartProps) {
 export function BalanceHistoryChart({
   data,
   loading,
@@ -269,7 +211,6 @@ export function BalanceHistoryChart({
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
               tick={AXIS_TICK}
             />
             <YAxis
@@ -277,16 +218,6 @@ export function BalanceHistoryChart({
               tickLine={false}
               tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickFormatter={(value: any) => `${value}`}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#0f172a",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "8px",
-              }}
-              formatter={(val: any) => [`${val} XLM`, "Balance"]}
-              tick={AXIS_TICK}
-              tickFormatter={(value) => `${value}`}
             />
             <Tooltip
               contentStyle={TOOLTIP_STYLE}
