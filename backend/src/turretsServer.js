@@ -11,8 +11,9 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const turretsRoutes = require("./routes/turrets");
 const { startRunner } = require("./services/turretsService");
+const { getConfig } = require("./config/env");
 
-const TURRETS_PORT = Number(process.env.TURRETS_PORT || 4100);
+const TURRETS_PORT = getConfig().turretsPort;
 
 function createTurretsApp() {
   const app = express();

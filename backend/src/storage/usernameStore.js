@@ -38,8 +38,9 @@
 
 const fs = require("fs");
 const path = require("path");
+const { getConfig } = require("../config/env");
 
-const DEFAULT_DATA_FILE = path.join(__dirname, "..", "..", "data", "usernames.json");
+const DEFAULT_DATA_FILE = getConfig().usernamesDataFile;
 const WRITE_RETRY_DELAY_MS = 50;
 
 function safeParseJson(raw) {
@@ -76,7 +77,7 @@ function isValidPublicKey(publicKey) {
  * @param {string} [options.dataFile] Path to the JSON store file.
  */
 function createUsernameStore(options = {}) {
-  const dataFile = options.dataFile || process.env.USERNAMES_DATA_FILE || DEFAULT_DATA_FILE;
+  const dataFile = options.dataFile || getConfig().usernamesDataFile;
 
   const store = {
     dataFile,

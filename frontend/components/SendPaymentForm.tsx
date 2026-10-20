@@ -41,7 +41,7 @@ import {
 import { Asset, Federation } from "@stellar/stellar-sdk";
 import { parseHorizonSubmissionError } from "@/lib/horizonErrors";
 import { signTransactionWithWallet } from "@/lib/wallet";
-import { submitSignedPayment } from "@/lib/paymentApi";
+import { apiGet, submitSignedPayment } from "@/lib/paymentApi";
 import { resolveSNSDomain } from "@/utils/snsResolver";
 import {
   formatNumber,
@@ -99,6 +99,11 @@ type FavouriteEntry = {
 };
 
 const ESTIMATED_NETWORK_FEE = `${STELLAR_BASE_FEE_XLM} XLM`;
+// Static XLM/USD rate used for the fiat estimate shown in the confirmation
+// modal. The live rate lives in `lib/price.ts`, but the modal renders
+// synchronously, so it falls back to this constant instead of showing a
+// placeholder.
+const XLM_USD_RATE = 0.11;
 const FAVOURITES_STORAGE_KEY = "stellar-micropay:favourites";
 
 interface BarcodeDetectorResult {
@@ -548,16 +553,17 @@ export default function SendPaymentForm({
     setIsResolvingUsername(true);
     setUsernameResolutionError(null);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-      const response = await fetch(`${apiBase}/api/accounts/resolve/${encodeURIComponent(cleanUsername)}`);
-      if (!response.ok) throw new Error(t("sendPayment.usernameNotFound"));
-      const payload = await response.json();
-      if (payload?.success && payload?.data?.publicKey) {
-        setDestination(payload.data.publicKey);
-        setUsernameResolutionError(null);
-      } else {
+      const data = await apiGet<{ publicKey?: string }>(
+        `/api/accounts/resolve/${encodeURIComponent(cleanUsername)}`,
+        { fallbackMessage: t("sendPayment.usernameNotFound") }
+      );
+
+      if (!data?.publicKey) {
         throw new Error(t("sendPayment.usernameResolveFailed"));
       }
+
+      setDestination(data.publicKey);
+      setUsernameResolutionError(null);
     } catch (err) {
       setUsernameResolutionError(
         err instanceof Error ? err.message : t("sendPayment.usernameResolveFailed")
@@ -612,7 +618,7 @@ export default function SendPaymentForm({
         clearTimeout(snsDebounceRef.current);
       }
     };
-  }, [destination]);
+  }, [destination, t]);
 
   const handleUseSNSAddress = () => {
     if (snsResolvedAddress) {
@@ -668,7 +674,7 @@ export default function SendPaymentForm({
         clearTimeout(federationDebounceRef.current);
       }
     };
-  }, [destination]);
+  }, [destination, t]);
 
   const handleUseFederationAddress = () => {
     if (federationResolvedAddress) {
@@ -1531,6 +1537,7 @@ export default function SendPaymentForm({
         memo={memo}
         memoType={memoType}
         estimatedFee={ESTIMATED_NETWORK_FEE}
+        usdValue={amountNum * XLM_USD_RATE}
         isTipOnChain={isTipOnChain}
         onCancel={() => setIsConfirmOpen(false)}
         onConfirm={() => { setIsConfirmOpen(false); executeSend(); }}

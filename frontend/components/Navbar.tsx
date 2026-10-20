@@ -6,6 +6,7 @@
  */
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
@@ -216,8 +217,16 @@ export default function Navbar({ onOpenAssistant }: NavbarProps) {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="group flex min-w-0 items-center gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-stellar-500/30 bg-stellar-500/20 transition-colors group-hover:border-stellar-500/60">
-              <StarIcon className="h-4 w-4 text-stellar-400" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-stellar-500/30 bg-stellar-500/20 transition-colors group-hover:border-stellar-500/60 overflow-hidden">
+              <Image
+                src="/icon-192.png"
+                alt="Stellar MicroPay Logo"
+                width={20}
+                height={20}
+                priority
+                unoptimized
+                className="h-5 w-5 object-contain"
+              />
             </div>
             <span className="truncate font-display font-semibold tracking-tight text-slate-900 dark:text-white">
               Stellar<span className="text-stellar-400">MicroPay</span>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import TipWidget from "@/components/TipWidget";
+import { ApiError, apiGet, isApiError } from "@/lib/paymentApi";
 import { useTranslation } from "@/contexts/I18nContext";
 
 interface ResolvedAccount {
@@ -19,7 +20,6 @@ type ResolveState =
 export default function TipPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { t } = useTranslation();
   const routeUsername = useMemo(() => {
     const raw = router.query.username;
     return typeof raw === "string" ? raw : null;
@@ -39,33 +39,24 @@ export default function TipPage() {
     }
 
     let isActive = true;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
 
     setResolveState({
       status: "loading",
       message: t("tipPage.lookingUp", { username: routeUsername }),
     });
 
-    fetch(`${apiBase}/api/accounts/resolve/${encodeURIComponent(routeUsername)}`)
-      .then(async (response) => {
-        const payload = await response.json().catch(() => null);
-
-        if (response.status === 404) {
-          throw new ResolveError(
-            "not-found",
-            payload?.error || t("tipPage.noPublicPage", { username: routeUsername })
-          );
-        }
-
-        if (!response.ok) {
-          throw new ResolveError(
-            "error",
-            payload?.error || t("tipPage.loadFailed")
-          );
-        }
-
+    apiGet<{ success?: boolean; data?: ResolvedAccount }>(
+      `/api/accounts/resolve/${encodeURIComponent(routeUsername)}`,
+      { envelope: false }
+    )
+      .then((payload) => {
         const account = payload?.data;
-        if (!payload?.success || !account?.publicKey || !account?.username) {
+
+        if (
+          payload?.success !== true ||
+          !account?.publicKey ||
+          !account?.username
+        ) {
           throw new ResolveError("error", t("tipPage.incompleteResponse"));
         }
 
@@ -83,6 +74,20 @@ export default function TipPage() {
 
         if (error instanceof ResolveError) {
           setResolveState({ status: error.kind, message: error.message });
+          return;
+        }
+
+        if (isApiError(error) && error.status > 0) {
+          const serverMessage = serverErrorText(error);
+          const status = error.status === 404 ? "not-found" : "error";
+          setResolveState({
+            status,
+            message:
+              serverMessage ??
+              (error.status === 404
+                ? t("tipPage.noPublicPage", { username: routeUsername })
+                : t("tipPage.loadFailed")),
+          });
           return;
         }
 
@@ -236,6 +241,12 @@ class ResolveError extends Error {
     super(message);
     this.kind = kind;
   }
+}
+
+/** The backend's own `error` text, when the failed response carried one. */
+function serverErrorText(error: ApiError): string | null {
+  const payload = error.payload as { error?: string } | null;
+  return payload?.error ?? null;
 }
 
 function PlanetIcon({ className }: { className?: string }) {

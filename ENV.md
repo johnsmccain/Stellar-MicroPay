@@ -154,3 +154,60 @@ following variables configure it:
 - **`NEXT_PUBLIC_API_URL`** — base URL the browser uses to POST the
   subscription to `/api/push/subscribe` (defaults to the same origin).
 - Both are documented with comments in `frontend/.env.example`.
+
+## Backend Startup Environment Inventory
+
+`backend/src/config/env.js` owns the backend defaults. The server loads
+`backend/.env` and validates configuration before loading routes or services.
+The inventory below accounts for all 40 accepted environment keys: 37 directly
+named runtime variables plus the three secret `_FILE` names read dynamically.
+Only `JWT_SECRET`, `SERVER_PRIVATE_KEY`, and `PAYMENT_SIGNING_SECRET` are
+required in production. Their `*_FILE` variants are accepted for mounted
+secrets: `JWT_SECRET_FILE`, `SERVER_PRIVATE_KEY_FILE`, and
+`PAYMENT_SIGNING_SECRET_FILE`. In development and tests, JWT and payment-signing
+secrets use test-only fallbacks, and a SEP-10 server key is generated
+ephemerally when used.
+
+| Variable(s) | Classification | Default or behavior |
+| --- | --- | --- |
+| `NODE_ENV` | Optional, validated | `development`; accepts `development`, `test`, `production` |
+| `STELLAR_NETWORK` | Optional, validated | `testnet`; accepts `testnet` or `mainnet` |
+| `PORT` | Optional, validated | `4000` |
+| `TURRETS_PORT` | Optional, validated | `4100` |
+| `HORIZON_URL` | Optional, validated | Network-specific Horizon URL; takes precedence over legacy `STELLAR_HORIZON_URL` |
+| `STELLAR_HORIZON_URL` | Optional alias | Used only when `HORIZON_URL` is unset |
+| `SOROBAN_RPC_URL` | Optional, validated | Network-specific Soroban RPC URL |
+| `CONTRACT_ID`, `SOROBAN_CONTRACT_ID`, `NEXT_PUBLIC_CONTRACT_ID` | Optional aliases | First set value is used; empty disables contract event streaming |
+| `EVENTS_POLL_INTERVAL_MS` | Optional, validated | `5000` ms |
+| `EVENT_POLL_INTERVAL_MS` | Optional legacy alias | Used only when `EVENTS_POLL_INTERVAL_MS` is unset |
+| `EVENTS_HEARTBEAT_INTERVAL_MS` | Optional, validated | `15000` ms |
+| `EVENTS_LEDGER_LOOKBACK` | Optional, validated | `20` ledgers |
+| `DOMAIN` | Optional | `stellarmicropay.com` |
+| `HOME_DOMAIN` | Optional | `DOMAIN`, then `localhost:4000` |
+| `JWT_SECRET` | Required in production | Authentication signing secret; `_FILE` form supported |
+| `SERVER_PRIVATE_KEY` | Required in production | Stellar server signing key; `_FILE` form supported; generated ephemerally in development/test |
+| `PAYMENT_SIGNING_SECRET` | Required in production | Payment request-signature key; `_FILE` form supported |
+| `CSRF_SECRET` | Optional | `JWT_SECRET`, then a local fallback |
+| `ALLOWED_ORIGINS` | Optional | `http://localhost:3000`; comma-separated CORS origins |
+| `LOG_LEVEL` | Optional, validated | `info` (`silent` in tests); Pino levels `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` |
+| `METRICS_ENABLED` | Optional | Disabled; set to `true` to expose `/metrics` |
+| `ADMIN_PUBLIC_KEYS` | Optional | Empty; comma-separated keys grant analytics admin access |
+| `ANTHROPIC_API_KEY` | Optional | Empty; AI parsing responds in degraded mode |
+| `REDIS_URL` | Optional, validated | Unset disables Redis and uses in-memory cache; accepts `redis://` or `rediss://` |
+| `ANALYTICS_CACHE_TTL_MS` | Optional, validated | `300000` ms |
+| `ANALYTICS_CACHE_MAX_ENTRIES` | Optional, validated | `500` entries |
+| `TURRETS_EVALUATION_INTERVAL_MS` | Optional, validated | `30000` ms |
+| `TURRETS_SIGNER_ADDRESS` | Optional | Empty; an ephemeral signer address is generated |
+| `USDC_ISSUER` | Optional | Configured public issuer; comma-separated issuer list is accepted |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Optional pair, validated | Both unset disables Web Push; set both to enable it |
+| `VAPID_CONTACT` | Optional, validated | `mailto:admin@stellarmicropay.com`; accepts `mailto:` or `https://` |
+| `USERNAMES_DATA_FILE` | Optional | `backend/data/usernames.json` |
+| `SCHEDULED_TX_DATA_FILE` | Optional | `backend/data/scheduled_transactions.json` |
+| `LEADERBOARD_OPTOUT_DATA_FILE` | Optional | `backend/data/leaderboard-opt-out.json` |
+
+All configured numeric values must be positive integers; the two ports must be
+in the range 1–65535. Invalid values, invalid URLs, unsupported network/runtime
+names, invalid log levels, and incomplete VAPID key pairs produce actionable
+startup errors. `EVENT_POLL_INTERVAL_MS` and `STELLAR_HORIZON_URL` remain
+supported for backwards compatibility; use their canonical counterparts for
+new deployments.

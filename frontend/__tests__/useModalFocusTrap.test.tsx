@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import { useModalFocusTrap } from "../hooks/useModalFocusTrap";
+import { useModalFocusTrap } from "@/hooks/useModalFocusTrap";
 
 function TestModal({
   isOpen,

@@ -14,6 +14,7 @@ import {
   type TurretsDeployment,
   type TurretsExecutionHistory,
 } from "@/lib/turrets";
+import { ApiError } from "@/lib/paymentApi";
 
 const OWNER = "GBRPYHIL2CI3FNIDTANYQ7BACEGIA63POASRMHWDHMV65QHJTWCTBYOO";
 const SIGNER = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
@@ -315,10 +316,15 @@ describe("Turrets API errors", () => {
     );
   });
 
-  it("propagates fetch network failures unchanged", async () => {
+  it("reports fetch network failures as a typed ApiError", async () => {
     const networkError = new TypeError("Failed to fetch");
     fetchMock().mockRejectedValueOnce(networkError);
 
-    await expect(getTurretSignerAddress()).rejects.toBe(networkError);
+    const error = await getTurretSignerAddress().catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error.message).toBe("Failed to fetch");
+    expect(error.status).toBe(0);
+    expect(error.code).toBe("network_error");
   });
 });

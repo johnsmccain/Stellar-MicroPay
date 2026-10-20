@@ -50,20 +50,9 @@
 "use strict";
 
 const jwt = require("jsonwebtoken");
+const { getConfig } = require("../config/env");
 
-// Require JWT_SECRET environment variable - no default value for security
-// Allow test default when not explicitly set (for CI/test environments)
-if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = "test-secret-key-for-jest-tests-only-not-for-production";
-  if (process.env.NODE_ENV !== "test" && !process.env.JEST_WORKER_ID) {
-    console.warn(
-      "WARNING: JWT_SECRET not set, using test default. " +
-      "Set JWT_SECRET in production with: openssl rand -base64 48"
-    );
-  }
-}
-
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = getConfig().jwtSecret;
 
 // Lock out an IP after repeated failed JWT verifications to slow token brute-forcing.
 const MAX_FAILED_ATTEMPTS = 5;

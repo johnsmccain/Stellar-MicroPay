@@ -27,7 +27,7 @@ jest.mock("@/components/LiveEventsFeed", () => ({
   __esModule: true,
   default: () => <div data-testid="live-events-feed">Live feed</div>,
 }));
-jest.mock("@/pages/PaymentRequestGenerator", () => () => <div>Payment Request</div>);
+jest.mock("@/components/PaymentRequestGenerator", () => () => <div>Payment Request</div>);
 jest.mock("@/components/SendPaymentForm", () => ({
   __esModule: true,
   default: () => <div>Send Payment</div>,

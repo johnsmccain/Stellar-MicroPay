@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
+const { getConfig } = require('../config/env');
 
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_placeholder';
+const JWT_SECRET = getConfig().jwtSecret;
 const EXPIRY_SECONDS = 15 * 60; // 15 minutes
 
 /**

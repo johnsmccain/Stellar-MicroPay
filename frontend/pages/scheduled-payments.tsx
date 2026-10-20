@@ -147,7 +147,7 @@ export default function ScheduledPaymentsPage() {
         </Head>
         <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
           <div className="mb-10 text-center">
-            <h1 className="mb-3 font-display text-3xl font-bold text-white">Scheduled Payments</h1>
+            <h1 className="mb-3 font-display text-3xl font-bold text-white">{t("pages.scheduledPayments.heading")}</h1>
             <p className="text-slate-400">
               Connect your wallet to create and manage recurring payments.
             </p>

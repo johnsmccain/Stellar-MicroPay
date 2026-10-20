@@ -25,6 +25,7 @@ import { useTranslation } from "@/contexts/I18nContext";
 import Toast from "@/components/Toast";
 import clsx from "clsx";
 import { AssetBadge } from "@/components/AssetBadge";
+import { TransactionRow } from "@/components/TransactionRow";
 
 export type TransactionDirectionFilter = "all" | "sent" | "received";
 
@@ -247,7 +248,7 @@ export default function TransactionList({
     }, 300);
   };
 
-  const handleRepeatPayment = (tx: PaymentRecord) => {
+  const handleRepeatPayment = useCallback((tx: PaymentRecord) => {
     const targetAddress = tx.type === "sent" ? tx.to : tx.from;
     const shortAddr = shortenAddress(targetAddress, 4);
     showToast(t("transactionList.repeatingPayment", { address: shortAddr }));
@@ -268,7 +269,7 @@ export default function TransactionList({
       pathname: "/dashboard",
       query,
     });
-  };
+  }, [onRepeatPayment, onSendAgain, router, showToast, t]);
 
   // Private off-chain payment notes — Issue #1189
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -288,12 +289,12 @@ export default function TransactionList({
     setNotes(loadAllPaymentNotes());
   }, []);
 
-  const handleStartEditNote = (hash: string) => {
+  const handleStartEditNote = useCallback((hash: string) => {
     setEditingNoteHash(hash);
     setNoteInputValue(notes[hash] ?? "");
-  };
+  }, [notes]);
 
-  const handleSaveNote = (hash: string) => {
+  const handleSaveNote = useCallback((hash: string) => {
     savePaymentNote(hash, noteInputValue);
     setNotes((prev) => {
       const next = { ...prev };
@@ -306,12 +307,16 @@ export default function TransactionList({
     });
     setEditingNoteHash(null);
     setNoteInputValue("");
-  };
+  }, [noteInputValue]);
 
-  const handleCancelEditNote = () => {
+  const handleCancelEditNote = useCallback(() => {
     setEditingNoteHash(null);
     setNoteInputValue("");
-  };
+  }, []);
+
+  const handleNoteInputChange = useCallback((val: string) => {
+    setNoteInputValue(val);
+  }, []);
 
   const fetchPayments = useCallback(
     async (isLoadMore = false) => {
@@ -418,11 +423,11 @@ export default function TransactionList({
     return () => observer.disconnect();
   }, [isMobile, hasMore, loading, loadingMore, handleLoadMore]);
 
-  const handleCopy = async (text: string, id: string) => {
+  const handleCopy = useCallback(async (text: string, id: string) => {
     await copyToClipboard(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-  };
+  }, []);
 
   // Prepend a newly streamed payment if it doesn't already exist
   useEffect(() => {
@@ -448,6 +453,33 @@ export default function TransactionList({
     (filters.minAmount && filters.minAmount.trim() !== "") ||
     (filters.memoSearch && filters.memoSearch.trim() !== "") ||
     debouncedSearchQuery.trim() !== "";
+
+  const handleRowFocus = useCallback((index: number) => {
+    setFocusedIndex(index);
+  }, []);
+
+  const handleRowBlur = useCallback(() => {
+    setFocusedIndex(-1);
+  }, []);
+
+  const handleRowKeyDown = useCallback(
+    (e: React.KeyboardEvent, tx: PaymentRecord, index: number) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.min(prev + 1, visiblePayments.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter" && focusedIndex === index) {
+        e.preventDefault();
+        const address = tx.type === "sent" ? tx.to : tx.from;
+        copyToClipboard(address);
+        setCopiedId(tx.id);
+        setTimeout(() => setCopiedId(null), 2000);
+      }
+    },
+    [visiblePayments.length, focusedIndex]
+  );
 
   // Issue #1046 — export exactly what is on screen: the currently filtered,
   // loaded rows (not all pages). Filename embeds a short key + today's date.
@@ -615,218 +647,33 @@ export default function TransactionList({
             )}
           </div>
         ) : (
-          visiblePayments.map((tx, index) => {
-            const targetAddress = tx.type === "sent" ? tx.to : tx.from;
-            return (
-              <div
-                key={tx.id}
-                tabIndex={focusedIndex === index ? 0 : -1}
-                onKeyDown={(e) => {
-                  if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setFocusedIndex((prev) => Math.min(prev + 1, visiblePayments.length - 1));
-                  } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setFocusedIndex((prev) => Math.max(prev - 1, 0));
-                  } else if (e.key === 'Enter' && focusedIndex === index) {
-                    e.preventDefault();
-                    const address = tx.type === "sent" ? tx.to : tx.from;
-                    copyToClipboard(address);
-                    setCopiedId(tx.id);
-                    setTimeout(() => setCopiedId(null), 2000);
-                  }
-                }}
-                onBlur={() => setFocusedIndex(-1)}
-                onFocus={() => setFocusedIndex(index)}
-                className={clsx(
-                  "flex items-center gap-3 p-3 rounded-xl bg-white/3 hover:bg-white/5 transition-colors group relative",
-                  focusedIndex === index && "outline-none ring-2 ring-stellar-500 ring-offset-2"
-                )}
-                aria-label={`${tx.type === "sent" ? t("transactionList.sent") : t("transactionList.received")} ${formatAsset(tx.amount, tx.asset)} ${tx.type === "sent" ? t("transactionList.to") : t("transactionList.from")} ${tx.type === "sent" ? tx.to : tx.from}`}
-              >
-                {/* Direction icon */}
-                <div
-                  className={clsx(
-                    "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
-                    tx.type === "sent"
-                      ? "bg-red-500/10 border border-red-500/20"
-                      : "bg-emerald-500/10 border border-emerald-500/20"
-                  )}
-                >
-                  {tx.type === "sent" ? (
-                    <ArrowUpIcon className="w-4 h-4 text-red-400" />
-                  ) : (
-                    <ArrowDownIcon className="w-4 h-4 text-emerald-400" />
-                  )}
-                </div>
-
-                {/* Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-200 capitalize">
-                      {tx.type === "sent" ? t("transactionList.sentTo") : t("transactionList.receivedFrom")}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleCopy(
-                          tx.type === "sent" ? tx.to : tx.from,
-                          tx.id
-                        )
-                      }
-                      aria-label={tx.type === "sent" ? t("transactionList.copyRecipientAddress") : t("transactionList.copySenderAddress")}
-                      className="address-pill hover:border-stellar-500/40 transition-colors text-xs cursor-pointer"
-                    >
-                      {copiedId === tx.id
-                        ? t("common.copied")
-                        : shortenAddress(tx.type === "sent" ? tx.to : tx.from, 5)}
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-slate-500">
-                      {formatRelativeTime(tx.createdAt)}
-                    </span>
-                    {tx.memo && (
-                      <span className="text-xs text-slate-600 truncate max-w-32">
-                        · &ldquo;{tx.memo}&rdquo;
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Private note display (Issue #1189) */}
-                  {notes[tx.transactionHash] && editingNoteHash !== tx.transactionHash && (
-                    <p className="text-xs italic text-slate-500 mt-0.5 truncate max-w-xs">
-                      📝 {notes[tx.transactionHash]}
-                    </p>
-                  )}
-
-                  {/* Inline note editor */}
-                  {editingNoteHash === tx.transactionHash && (
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <input
-                        type="text"
-                        value={noteInputValue}
-                        onChange={(e) => setNoteInputValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveNote(tx.transactionHash);
-                          if (e.key === "Escape") handleCancelEditNote();
-                        }}
-                        placeholder={t("transactionList.notePlaceholder")}
-                        maxLength={200}
-                        autoFocus
-                        className="flex-1 text-xs bg-white/5 border border-white/10 rounded-md px-2 py-1 text-slate-300 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-stellar-500/40"
-                      />
-                      <button
-                        onClick={() => handleSaveNote(tx.transactionHash)}
-                        className="text-xs text-emerald-400 hover:text-emerald-300 px-2 py-1 rounded cursor-pointer"
-                      >
-                        {t("transactionList.save")}
-                      </button>
-                      <button
-                        onClick={handleCancelEditNote}
-                        aria-label={t("transactionList.cancelEditNote")}
-                        className="text-xs text-slate-500 hover:text-slate-300 px-1 py-1 rounded cursor-pointer"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Amount + Repeat + Link */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span
-                    className={clsx(
-                      "text-sm font-mono font-medium",
-                      tx.type === "sent" ? "text-red-400" : "text-emerald-400"
-                    )}
-                  >
-                    {tx.type === "sent" ? "-" : "+"}
-                    {formatAsset(tx.amount, tx.asset)}
-                  </span>
-
-                  {/* Add / edit private note button - Issue #1189 */}
-                  {editingNoteHash !== tx.transactionHash && (
-                    <button
-                      onClick={() => handleStartEditNote(tx.transactionHash)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-slate-400 hover:text-stellar-400 px-1 py-0.5 rounded cursor-pointer"
-                      title={notes[tx.transactionHash] ? t("transactionList.editNote") : t("transactionList.addNote")}
-                      aria-label={notes[tx.transactionHash] ? t("transactionList.editNote") : t("transactionList.addNoteLabel")}
-                    >
-                      {notes[tx.transactionHash] ? "✏️" : "📝"}
-                    </button>
-                  )}
-
-                  {/* Repeat Payment Button (#1187) */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRepeatPayment(tx);
-                    }}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-stellar-400 hover:text-stellar-300 bg-stellar-500/10 hover:bg-stellar-500/20 px-2 py-1 rounded transition-colors whitespace-nowrap cursor-pointer"
-                    title={t("transactionList.repeatTitle")}
-                    aria-label={t("transactionList.repeatPaymentTo", { address: shortenAddress(targetAddress, 4) })}
-                  >
-                    <RepeatIcon className="w-3 h-3" />
-                    {t("transactionList.repeat")}
-                  </button>
-
-                  {onPrintReceipt && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPrintReceipt(tx);
-                      }}
-                      className="text-slate-500 hover:text-stellar-400 px-1 py-0.5 rounded transition-colors cursor-pointer"
-                      title={t("transactionList.printReceipt")}
-                      aria-label={t("transactionList.printReceiptFor", { hash: tx.transactionHash.slice(0, 8) })}
-                    >
-                      <PrinterIcon className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-
-                  {/* Mint on-chain receipt for eligible sent payments */}
-                  {onMintReceipt && isReceiptEligible(tx, publicKey) && (
-                    mintedReceiptHashes[tx.transactionHash] !== undefined ? (
-                      <span
-                        className="inline-flex items-center text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded whitespace-nowrap"
-                        data-testid={`receipt-minted-${tx.id}`}
-                      >
-                        {t("transactionList.receiptNumber", { index: mintedReceiptHashes[tx.transactionHash] })}
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onMintReceipt(tx);
-                        }}
-                        disabled={mintingReceiptHash !== null}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={t("transactionList.mintReceiptTitle")}
-                        aria-label={t("transactionList.mintReceiptFor", { address: shortenAddress(targetAddress, 4) })}
-                      >
-                        {mintingReceiptHash === tx.transactionHash ? t("transactionList.minting") : t("transactionList.mintReceipt")}
-                      </button>
-                    )
-                  )}
-
-                  <a
-                    href={explorerUrl(tx.transactionHash)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-stellar-400"
-                    title={t("transactionList.viewOnStellarExpert")}
-                    aria-label={t("transactionList.viewTxOnStellarExpert")}
-                  >
-                    <ExternalLinkIcon className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </div>
-            );
-          })
+          visiblePayments.map((tx, index) => (
+            <TransactionRow
+              key={tx.id}
+              tx={tx}
+              index={index}
+              focusedIndex={focusedIndex}
+              visibleCount={visiblePayments.length}
+              publicKey={publicKey}
+              isCopied={copiedId === tx.id}
+              note={notes[tx.transactionHash]}
+              isEditingNote={editingNoteHash === tx.transactionHash}
+              noteInputValue={noteInputValue}
+              mintingReceiptHash={mintingReceiptHash}
+              mintedReceiptHashes={mintedReceiptHashes}
+              onCopy={handleCopy}
+              onRepeatPayment={handleRepeatPayment}
+              onFocus={handleRowFocus}
+              onBlur={handleRowBlur}
+              onKeyDown={handleRowKeyDown}
+              onStartEditNote={handleStartEditNote}
+              onSaveNote={handleSaveNote}
+              onCancelEditNote={handleCancelEditNote}
+              onNoteInputChange={handleNoteInputChange}
+              onPrintReceipt={onPrintReceipt}
+              onMintReceipt={onMintReceipt}
+            />
+          ))
         )}
 
         {/* Infinite-scroll sentinel (mobile) */}

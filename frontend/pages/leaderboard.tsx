@@ -1,14 +1,12 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { shortenAddress } from "@/utils/format";
+import { apiGet } from "@/lib/paymentApi";
 import { useTranslation } from "@/contexts/I18nContext";
 import { formatNumber } from "@/utils/intlFormatters";
-import { useTranslation } from "@/contexts/I18nContext";
 
 type Entry = { publicKey: string; totalXLM: string; federationName?: string | null };
 type Leaderboard = { recipients: Entry[]; senders: Entry[]; totalTips: number; totalXLM: string };
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 function Ranking({ title, entries }: { title: string; entries: Entry[] }) {
   const { t } = useTranslation();
@@ -42,10 +40,11 @@ export default function LeaderboardPage() {
     let active = true;
     const load = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/tips/leaderboard`);
-        if (!response.ok) throw new Error(t("leaderboard.loadError"));
-        const body = await response.json();
-        if (active) { setData(body.data); setError(""); }
+        const body = await apiGet<{ data?: Leaderboard }>(
+          "/api/tips/leaderboard",
+          { envelope: false, fallbackMessage: t("leaderboard.loadError") }
+        );
+        if (active) { setData(body?.data ?? null); setError(""); }
       } catch (err) { if (active) setError(err instanceof Error ? err.message : t("leaderboard.loadError")); }
     };
     void load();

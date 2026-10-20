@@ -2,6 +2,7 @@
 import { Router, Request, Response } from 'express';
 import { Server } from '@stellar/stellar-sdk/rpc'; // or stellar-sdk Horizon server
 import { logger } from '../utils/logger';
+const { getConfig } = require('../config/env');
 
 const router = Router();
 
@@ -10,7 +11,7 @@ let cachedFeeHistory: { data: any[]; timestamp: number } | null = null;
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // Mock or configure Stellar Horizon / RPC client
-const HORIZON_URL = process.env.STELLAR_HORIZON_URL || 'https://horizon-testnet.stellar.org';
+const HORIZON_URL = getConfig().horizonUrl;
 
 /**
  * @swagger

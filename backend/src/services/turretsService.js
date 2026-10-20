@@ -16,10 +16,12 @@ const {
   Transaction,
   TransactionBuilder,
 } = require("@stellar/stellar-sdk");
+const { getConfig } = require("../config/env");
 
-const HORIZON_URL = process.env.HORIZON_URL || "https://horizon-testnet.stellar.org";
+const config = getConfig();
+const HORIZON_URL = config.horizonUrl;
 const NETWORK_PASSPHRASE =
-  process.env.STELLAR_NETWORK === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+  config.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 
 const server = new Horizon.Server(HORIZON_URL);
 
@@ -27,7 +29,7 @@ const server = new Horizon.Server(HORIZON_URL);
 // The turret submits scheduled transactions from a dedicated signer. Users
 // fund this address so it can cover reserves + fees. Configurable via
 // TURRETS_SIGNER_ADDRESS; otherwise a stable ephemeral keypair is generated.
-let cachedTurretSignerAddress = process.env.TURRETS_SIGNER_ADDRESS || null;
+let cachedTurretSignerAddress = config.turretsSignerAddress || null;
 
 function getTurretSignerAddress() {
   if (cachedTurretSignerAddress && /^G[A-Z0-9]{55}$/.test(cachedTurretSignerAddress)) {
@@ -323,7 +325,7 @@ function startRunner() {
   if (runnerStarted) return;
   runnerStarted = true;
 
-  const pollIntervalMs = Number(process.env.TURRETS_EVALUATION_INTERVAL_MS || 30_000);
+  const pollIntervalMs = getConfig().turretsEvaluationIntervalMs;
 
   runnerTimer = setInterval(async () => {
     for (const deployment of deployments.values()) {
@@ -532,7 +534,7 @@ function createScheduledDca({
   const issuer =
     assetCode === "XLM"
       ? null
-      : assetIssuer || process.env.USDC_ISSUER || null;
+      : assetIssuer || getConfig().usdcIssuer || null;
 
   if (assetCode !== "XLM") {
     toDexAsset(assetCode, issuer);

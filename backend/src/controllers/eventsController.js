@@ -1,11 +1,10 @@
 "use strict";
 
 const { SorobanRpc } = require("@stellar/stellar-sdk");
+const { getConfig } = require("../config/env");
 
-const rpc = new SorobanRpc.Server(
-  process.env.SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org"
-);
-const pollMs = Number(process.env.EVENT_POLL_INTERVAL_MS || 5000);
+const rpc = new SorobanRpc.Server(getConfig().sorobanRpcUrl);
+const pollMs = getConfig().eventPollIntervalMs;
 
 async function stream(req, res) {
   res.status(200).set({
@@ -17,7 +16,7 @@ async function stream(req, res) {
 
   let closed = false;
   let nextLedger = Number(req.query.startLedger || 0) || undefined;
-  const contractId = process.env.CONTRACT_ID || process.env.NEXT_PUBLIC_CONTRACT_ID;
+  const contractId = getConfig().contractId;
   const send = (event, payload) => res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
   send("ready", { contractId: contractId || null });
 

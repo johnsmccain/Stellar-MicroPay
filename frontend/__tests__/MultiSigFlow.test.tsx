@@ -56,6 +56,16 @@ describe('MultiSigFlow', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // `clearAllMocks` only resets the recorded calls, not the queue of
+    // `*Once` implementations. A build mock that a previous test queued but
+    // never consumed would therefore satisfy the next test's build, so the
+    // transaction mocks are reset explicitly here.
+    const { buildPaymentTransaction, collectSignatures, submitTransaction } =
+      require('@/lib/stellar');
+    buildPaymentTransaction.mockReset();
+    collectSignatures.mockReset();
+    submitTransaction.mockReset();
   });
 
   describe('Build Step', () => {
@@ -88,7 +98,7 @@ describe('MultiSigFlow', () => {
       const amountInput = screen.getByPlaceholderText('0.0');
       const thresholdInput = screen.getByRole('spinbutton', { name: 'Signature Threshold' });
 
-      await user.type(destInput, 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(destInput, 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(amountInput, '10');
       await user.clear(thresholdInput);
       await user.type(thresholdInput, '2');
@@ -106,7 +116,7 @@ describe('MultiSigFlow', () => {
       render(<MultiSigFlow {...defaultProps} />);
       const user = userEvent.setup();
 
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
@@ -124,7 +134,7 @@ describe('MultiSigFlow', () => {
       render(<MultiSigFlow {...defaultProps} />);
       const user = userEvent.setup();
 
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
@@ -146,7 +156,7 @@ describe('MultiSigFlow', () => {
       render(<MultiSigFlow {...defaultProps} />);
       const user = userEvent.setup();
 
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
@@ -169,7 +179,7 @@ describe('MultiSigFlow', () => {
       render(<MultiSigFlow {...defaultProps} />);
       const user = userEvent.setup();
 
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
@@ -197,7 +207,7 @@ describe('MultiSigFlow', () => {
       render(<MultiSigFlow {...defaultProps} />);
       const user = userEvent.setup();
 
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
@@ -226,7 +236,7 @@ describe('MultiSigFlow', () => {
       const user = userEvent.setup();
 
       // Build
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
       await user.click(screen.getByRole('button', { name: 'Build Transaction' }));
 
@@ -262,7 +272,7 @@ describe('MultiSigFlow', () => {
       const user = userEvent.setup();
 
       // Build with threshold of 2
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
       await user.click(screen.getByRole('button', { name: 'Build Transaction' }));
 
@@ -305,7 +315,7 @@ describe('MultiSigFlow', () => {
       const user = userEvent.setup();
 
       // Build
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
       await user.click(screen.getByRole('button', { name: 'Build Transaction' }));
 
@@ -362,7 +372,7 @@ describe('MultiSigFlow', () => {
       const user = userEvent.setup();
 
       // Build
-      await user.type(screen.getByPlaceholderText('G...'), 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(screen.getByPlaceholderText('G...'), 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(screen.getByPlaceholderText('0.0'), '10');
       await user.click(screen.getByRole('button', { name: 'Build Transaction' }));
 
@@ -421,7 +431,7 @@ describe('MultiSigFlow', () => {
       const destInput = screen.getByPlaceholderText('G...');
       const amountInput = screen.getByPlaceholderText('0.0');
 
-      await user.type(destInput, 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(destInput, 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(amountInput, '200'); // Exceeds balance of 100
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
@@ -436,10 +446,12 @@ describe('MultiSigFlow', () => {
       const amountInput = screen.getByPlaceholderText('0.0');
       const thresholdInput = screen.getByRole('spinbutton', { name: 'Signature Threshold' });
 
-      await user.type(destInput, 'GDEST1234567890123456789012345678901234567890123456789012');
+      await user.type(destInput, 'GDEST123456789012345678901234567890123456789012345678901');
       await user.type(amountInput, '10');
-      await user.clear(thresholdInput);
-      await user.type(thresholdInput, '1');
+      // The threshold field is controlled and snaps an empty value back to
+      // its minimum of 2, so the value is set directly instead of being
+      // cleared and retyped.
+      fireEvent.change(thresholdInput, { target: { value: '1' } });
 
       const buildBtn = screen.getByRole('button', { name: 'Build Transaction' });
       expect(buildBtn).toBeDisabled();

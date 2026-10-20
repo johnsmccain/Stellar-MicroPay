@@ -57,6 +57,29 @@ const nextConfig = {
   reactStrictMode: true,
   // Required for the production Docker image (copies only what's needed)
   output: "export",
+  images: {
+    // With `output: "export"`, Next.js default image optimization is not available.
+    // Unoptimized images prevent build errors and serve static assets directly.
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "stellar-micropay.vercel.app",
+      },
+      {
+        protocol: "https",
+        hostname: "contributors-img.web.app",
+      },
+      {
+        protocol: "https",
+        hostname: "horizon.stellar.org",
+      },
+      {
+        protocol: "https",
+        hostname: "horizon-testnet.stellar.org",
+      },
+    ],
+  },
   // Allow Stellar SDK in browser
   webpack: (config) => {
     config.resolve.fallback = {

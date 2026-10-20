@@ -11,6 +11,7 @@ import {
   formatNumber,
   formatUSD,
 } from "@/utils/intlFormatters";
+import { apiGet } from "@/lib/paymentApi";
 import { useTranslation } from "@/contexts/I18nContext";
 
 interface TipRecord {
@@ -56,25 +57,16 @@ export default function CreatorTipsDashboard({
     setError(null);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-
-      // Fetch tips received
-      const tipsResponse = await fetch(
-        `${apiBase}/api/tips/received/${encodeURIComponent(publicKey)}?limit=${pageSize}&offset=${page * pageSize}`
+      const data = await apiGet<{ tips?: TipRecord[]; stats?: TipsStats | null }>(
+        `/api/tips/received/${encodeURIComponent(publicKey)}`,
+        {
+          query: { limit: pageSize, offset: page * pageSize },
+          fallbackMessage: "Failed to load tips",
+        }
       );
 
-      if (!tipsResponse.ok) {
-        throw new Error("Failed to load tips");
-      }
-
-      const tipsPayload = await tipsResponse.json();
-
-      if (tipsPayload?.success) {
-        setTips(tipsPayload.data.tips || []);
-        setStats(tipsPayload.data.stats || null);
-      } else {
-        setTips([]);
-      }
+      setTips(data?.tips ?? []);
+      setStats(data?.stats ?? null);
     } catch (err) {
       console.error("Error fetching tips:", err);
       setError(t("creatorTips.loadError"));

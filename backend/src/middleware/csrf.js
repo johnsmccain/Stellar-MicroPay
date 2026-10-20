@@ -27,6 +27,7 @@
 "use strict";
 
 const crypto = require("crypto");
+const { getConfig } = require("../config/env");
 
 const CSRF_COOKIE = "csrfToken";
 const CSRF_HEADER = "x-csrf-token";
@@ -64,7 +65,7 @@ function parseCookies(cookieHeader) {
  * Encodes timestamp (8 bytes) + entropy (16 bytes) + HMAC-SHA256 (8 bytes) = 32 bytes (64 hex chars).
  */
 function generateCsrfToken(issuedAt = Date.now()) {
-  const secret = process.env.CSRF_SECRET || process.env.JWT_SECRET || "default-csrf-secret";
+  const secret = getConfig().csrfSecret;
   const buf = Buffer.alloc(32);
   buf.writeBigUInt64BE(BigInt(issuedAt), 0);
   crypto.randomFillSync(buf, 8, 16);
@@ -81,7 +82,7 @@ function isTokenExpired(token, maxAgeMs = CSRF_TOKEN_TTL_MS) {
   try {
     const buf = Buffer.from(token, "hex");
     if (buf.length !== 32) return false;
-    const secret = process.env.CSRF_SECRET || process.env.JWT_SECRET || "default-csrf-secret";
+    const secret = getConfig().csrfSecret;
     const expectedHmac = crypto.createHmac("sha256", secret).update(buf.subarray(0, 24)).digest().subarray(0, 8);
     const actualHmac = buf.subarray(24, 32);
     if (!crypto.timingSafeEqual(expectedHmac, actualHmac)) {
@@ -117,7 +118,7 @@ function tokensMatch(a, b) {
 function setCsrfCookie(res, token = generateCsrfToken()) {
   res.cookie(CSRF_COOKIE, token, {
     httpOnly: false, // must be readable by the frontend to echo it back
-    secure: process.env.NODE_ENV === "production",
+    secure: getConfig().nodeEnv === "production",
     sameSite: "strict",
     path: "/",
     maxAge: CSRF_TOKEN_TTL_MS,

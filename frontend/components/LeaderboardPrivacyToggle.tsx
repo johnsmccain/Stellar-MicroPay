@@ -6,10 +6,13 @@
 
 import { useEffect, useState } from "react";
 import { getJwtToken } from "@/lib/auth";
+import { apiGet, apiPut } from "@/lib/paymentApi";
 import { useTranslation } from "@/contexts/I18nContext";
 
-function apiBase(): string {
-  return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+const OPT_OUT_PATH = "/api/tips/leaderboard/opt-out";
+
+interface OptOutResponse {
+  data?: { optedOut?: boolean };
 }
 
 export default function LeaderboardPrivacyToggle() {
@@ -23,10 +26,7 @@ export default function LeaderboardPrivacyToggle() {
     const jwt = getJwtToken();
     setToken(jwt);
     if (!jwt) return;
-    fetch(`${apiBase()}/api/tips/leaderboard/opt-out`, {
-      headers: { Authorization: `Bearer ${jwt}` },
-    })
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+    apiGet<OptOutResponse>(OPT_OUT_PATH, { auth: true, envelope: false })
       .then((body) => setOptedOut(Boolean(body?.data?.optedOut)))
       .catch(() => setError(t("leaderboardPrivacy.loadError")));
   }, [t]);
@@ -36,13 +36,11 @@ export default function LeaderboardPrivacyToggle() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`${apiBase()}/api/tips/leaderboard/opt-out`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ optedOut: next }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json();
+      const body = await apiPut<OptOutResponse>(
+        OPT_OUT_PATH,
+        { optedOut: next },
+        { auth: true, envelope: false }
+      );
       setOptedOut(Boolean(body?.data?.optedOut));
     } catch {
       setError(t("leaderboardPrivacy.saveError"));

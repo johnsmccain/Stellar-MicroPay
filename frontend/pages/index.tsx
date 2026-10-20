@@ -5,13 +5,36 @@
 
 import Head from "next/head";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import WalletConnect from "@/components/WalletConnect";
 import { useWallet } from "@/lib/useWallet";
 import { useTranslation } from "@/contexts/I18nContext";
 import { formatNumber } from "@/utils/intlFormatters";
-import { useTranslation } from "@/contexts/I18nContext";
+
+// The connect panel is the only part of the landing page that pulls in the
+// wallet stack (Freighter + Stellar SDK) and it mounts solely after the
+// visitor clicks "Connect wallet", so it is fetched on demand instead of
+// shipping in the page's initial bundle (#1442).
+const WalletConnect = dynamic(() => import("@/components/WalletConnect"), {
+  ssr: false,
+  loading: () => <ConnectPanelLoading />,
+});
+
+/** Placeholder shown while the lazily-imported connect panel downloads. */
+function ConnectPanelLoading() {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="w-full rounded-2xl border border-white/10 bg-cosmos-800 p-6 animate-pulse"
+      role="status"
+    >
+      <div className="h-5 w-40 rounded bg-white/10 mb-4" />
+      <div className="h-12 w-full rounded-lg bg-white/10" />
+      <span className="mt-3 block text-sm text-slate-400">{t("landing.loadingConnectPanel")}</span>
+    </div>
+  );
+}
 
 const FEATURES = [
   { icon: "⚡", titleKey: "landing.featureInstantSettlementTitle", descKey: "landing.featureInstantSettlementDesc" },
@@ -30,7 +53,6 @@ export default function Home() {
   const { publicKey } = useWallet();
   const { t } = useTranslation();
   const router = useRouter();
-  const { t } = useTranslation();
   const [showConnect, setShowConnect] = useState(false);
 
   const handleWalletConnect = (_publicKey: string) => {
@@ -113,7 +135,7 @@ export default function Home() {
               </button>
             )}
             <a
-              href="https://github.com/your-org/stellar-micropay"
+              href="https://github.com/Emmy123222/Stellar-MicroPay"
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t("landing.viewSourceAria")}

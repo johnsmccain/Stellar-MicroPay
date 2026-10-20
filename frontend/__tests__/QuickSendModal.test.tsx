@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import QuickSendModal from "../components/QuickSendModal";
+import QuickSendModal from "@/components/QuickSendModal";
 
 jest.mock("@/components/SendPaymentForm", () => {
   return function MockSendPaymentForm({ onSuccess }: { onSuccess?: () => void }) {

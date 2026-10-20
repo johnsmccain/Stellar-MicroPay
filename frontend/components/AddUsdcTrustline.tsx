@@ -14,6 +14,7 @@ import {
   buildChangeTrustTransaction,
   submitTransaction,
 } from "@/lib/stellar";
+import { apiGet, isApiError } from "@/lib/paymentApi";
 import { signTransactionWithWallet } from "@/lib/wallet";
 import { useTranslation } from "@/contexts/I18nContext";
 
@@ -40,20 +41,19 @@ export default function AddUsdcTrustline({
     setChecking(true);
     setError(null);
     try {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-      const res = await fetch(
-        `${apiBase}/api/accounts/${encodeURIComponent(
-          publicKey
-        )}/has-usdc-trustline`
+      const payload = await apiGet<{ hasTrustline?: boolean }>(
+        `/api/accounts/${encodeURIComponent(publicKey)}/has-usdc-trustline`,
+        { envelope: false }
       );
-      if (!res.ok) {
-        throw new Error(t("trustline.checkFailed", { status: res.status }));
-      }
-      const payload = await res.json();
       setHasTrustline(Boolean(payload?.hasTrustline));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("trustline.checkFailedFallback"));
+      setError(
+        isApiError(err) && err.status > 0
+          ? t("trustline.checkFailed", { status: err.status })
+          : err instanceof Error && err.message
+            ? err.message
+            : t("trustline.checkFailedFallback")
+      );
       setHasTrustline(null);
     } finally {
       setChecking(false);

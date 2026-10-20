@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type Translate } from "@/lib/i18n";
 import { useTranslation } from "@/contexts/I18nContext";
+import { getApiBaseUrl } from "@/lib/paymentApi";
 import {
   formatAsset,
   formatNumber,
@@ -91,7 +92,7 @@ const EVENT_TYPE_KEYS: Record<string, string> = {
 
 export function resolveApiBaseUrl(override?: string): string {
   if (override) return override.replace(/\/$/, "");
-  return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+  return getApiBaseUrl();
 }
 
 export function buildEventsStreamUrl(apiBaseUrl: string): string {

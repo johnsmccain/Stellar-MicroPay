@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, Tooltip, ResponsiveContainer } from "recharts";
 import { formatTime, formatXLM } from "@/utils/intlFormatters";
+import { apiGet } from "@/lib/paymentApi";
 import { useTranslation } from "@/contexts/I18nContext";
 
 interface FeeDataPoint {
@@ -26,16 +27,12 @@ export default function FeeHistorySparkline({ className = "" }: FeeHistorySparkl
   useEffect(() => {
     const fetchFeeHistory = async () => {
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-        const response = await fetch(`${apiBase}/api/network/fee-history`);
-        
-        if (!response.ok) {
-          throw new Error(t("feeSparkline.fetchFailed"));
-        }
+        const data = await apiGet<FeeDataPoint[]>("/api/network/fee-history", {
+          fallbackMessage: t("feeSparkline.fetchFailed"),
+        });
 
-        const payload = await response.json();
-        if (payload?.success && Array.isArray(payload?.data)) {
-          setFeeHistory(payload.data);
+        if (Array.isArray(data)) {
+          setFeeHistory(data);
         }
       } catch (err) {
         console.error("Error fetching fee history:", err);

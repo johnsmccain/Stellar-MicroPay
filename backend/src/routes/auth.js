@@ -13,6 +13,7 @@ const jwt     = require("jsonwebtoken");
 const { Utils, Keypair } = require("@stellar/stellar-sdk");
 const { JWT_SECRET } = require("../middleware/auth");
 const { setCsrfCookie } = require("../middleware/csrf");
+const { getConfig, getServerPrivateKey } = require("../config/env");
 const {
   authChallengeLimiter,
   authVerifyLimiter,
@@ -20,17 +21,14 @@ const {
 
 const router = express.Router();
 
-const HOME_DOMAIN = process.env.HOME_DOMAIN || "localhost:4000";
-const NETWORK_PASSPHRASE =
-  process.env.STELLAR_NETWORK === "mainnet"
-    ? "Public Global Stellar Network ; September 2015"
-    : "Test SDF Network ; September 2015";
+const HOME_DOMAIN = getConfig().homeDomain;
+const NETWORK_PASSPHRASE = getConfig().networkPassphrase;
 
 // Cache the server keypair — regenerated only on cold start.
 let cachedServerKeypair = null;
 function getServerKeypair() {
   if (!cachedServerKeypair) {
-    const secret = process.env.SERVER_PRIVATE_KEY || Keypair.random().secret();
+    const secret = getServerPrivateKey();
     cachedServerKeypair = Keypair.fromSecret(secret);
   }
   return cachedServerKeypair;
@@ -83,7 +81,7 @@ function verifyChallenge(req, res) {
 
     res.cookie("jwt", token, {
       httpOnly: true,
-      secure:   process.env.NODE_ENV === "production",
+      secure:   getConfig().nodeEnv === "production",
       sameSite: "strict",
       maxAge:   24 * 60 * 60 * 1000,
     });

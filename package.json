@@ -5,6 +5,7 @@
     "dev": "concurrently -k -n backend,frontend -c green,blue \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
+    "test:all": "npm test --prefix backend && npm test --prefix frontend && make contract-test",
     "prepare": "lefthook install && simple-git-hooks"
   },
   "dependencies": {

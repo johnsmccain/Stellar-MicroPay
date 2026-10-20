@@ -18,6 +18,7 @@ import {
 } from "@stellar/freighter-api";
 
 import { getNetworkPassphrase, getNetworkConfig } from "./stellar";
+import { apiGet, apiPost } from "./paymentApi";
 import {
   getJwtToken as getSessionJwtToken,
   setJwtToken as setSessionJwtToken,
@@ -45,28 +46,25 @@ export function getJwtToken() {
 }
 
 async function fetchAuthChallenge(publicKey: string): Promise<string> {
-  const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-  const res  = await fetch(`${base}/api/auth?account=${encodeURIComponent(publicKey)}`, {
+  const { transaction } = await apiGet<{ transaction: string }>("/api/auth", {
+    query: { account: publicKey },
     credentials: "include",
+    envelope: false,
+    fallbackMessage: "Failed to fetch SEP-0010 challenge",
   });
-  if (!res.ok) throw new Error("Failed to fetch SEP-0010 challenge");
-  const { transaction } = await res.json();
   return transaction;
 }
 
 async function verifyAuthChallenge(signedXDR: string): Promise<string> {
-  const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-  const res  = await fetch(`${base}/api/auth`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ transaction: signedXDR }),
-  });
-  if (!res.ok) {
-    const { error } = await res.json().catch(() => ({ error: "Auth failed" }));
-    throw new Error(error || "SEP-0010 verification failed");
-  }
-  const { token } = await res.json();
+  const { token } = await apiPost<{ token: string }>(
+    "/api/auth",
+    { transaction: signedXDR },
+    {
+      credentials: "include",
+      envelope: false,
+      fallbackMessage: "Auth failed",
+    }
+  );
   return token;
 }
 

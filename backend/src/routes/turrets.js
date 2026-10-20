@@ -62,9 +62,241 @@ const router = express.Router();
  *               $ref: '#/components/schemas/Error'
  */
 router.get("/", strictLimiter, controller.list);
+
+/**
+ * @swagger
+ * /api/turrets/signer:
+ *   get:
+ *     tags: [Turrets]
+ *     summary: Get the address that signs Turrets deployment transactions
+ *     description: >-
+ *       Returns the Stellar address the Turrets backend uses to sign the
+ *       deployment transactions it submits on the owner's behalf.
+ *     responses:
+ *       "200":
+ *         description: The Turrets signer address
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     turretSignerAddress:
+ *                       type: string
+ *                       description: Stellar address of the Turrets signer.
+ *       "429":
+ *         description: >-
+ *           Rate limit exceeded — the strict limiter allows 20 requests per
+ *           minute per IP.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/signer", strictLimiter, controller.getSigner);
+
+/**
+ * @swagger
+ * /api/turrets/dca:
+ *   post:
+ *     tags: [Turrets]
+ *     summary: Create a scheduled (DCA) payment deployment
+ *     description: >-
+ *       Creates a turrets deployment that repeatedly converts the configured
+ *       quote asset for the recipient on a fixed interval. The deployment is
+ *       created in the `active` state and starts running immediately.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ownerPublicKey, recipient, amount]
+ *             properties:
+ *               ownerPublicKey:
+ *                 type: string
+ *                 description: Stellar public key that owns the deployment.
+ *               recipient:
+ *                 type: string
+ *                 description: Stellar public key receiving each scheduled payment.
+ *               amount:
+ *                 type: number
+ *                 description: Amount converted per interval; must be greater than 0.
+ *               asset:
+ *                 type: string
+ *                 default: XLM
+ *                 description: Quote asset code (defaults to `XLM`).
+ *               assetIssuer:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Issuer of the quote asset when it is not `XLM`.
+ *               frequency:
+ *                 type: string
+ *                 enum: [daily, weekly, monthly]
+ *                 default: daily
+ *                 description: How often each scheduled payment runs.
+ *     responses:
+ *       "201":
+ *         description: Scheduled payment deployment created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/TxFunctionDeployment'
+ *       "400":
+ *         description: >-
+ *           Invalid public key, non-positive amount, or unsupported frequency
+ *           (must be `daily`, `weekly`, or `monthly`)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       "429":
+ *         description: >-
+ *           Rate limit exceeded — the strict limiter allows 20 requests per
+ *           minute per IP.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/dca", strictLimiter, controller.createDca);
+
+/**
+ * @swagger
+ * /api/turrets/stop-loss:
+ *   post:
+ *     tags: [Turrets]
+ *     summary: Create a stop-loss automation deployment
+ *     description: >-
+ *       Creates a turrets deployment that sells the configured asset once the
+ *       market price drops to the given threshold. The deployment is created
+ *       in the `active` state and starts monitoring immediately.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ownerPublicKey, thresholdPrice, amountSell]
+ *             properties:
+ *               ownerPublicKey:
+ *                 type: string
+ *                 description: Stellar public key that owns the deployment.
+ *               thresholdPrice:
+ *                 type: number
+ *                 description: Price at which the asset is sold; must be greater than 0.
+ *               amountSell:
+ *                 type: number
+ *                 description: Amount sold when the threshold is reached; must be greater than 0.
+ *               sellAssetCode:
+ *                 type: string
+ *                 default: XLM
+ *                 description: Code of the asset sold on trigger (defaults to `XLM`).
+ *               sellAssetIssuer:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Issuer of the sold asset when it is not `XLM`.
+ *               cooldownMinutes:
+ *                 type: integer
+ *                 description: Minimum delay between two sales.
+ *     responses:
+ *       "201":
+ *         description: Stop-loss automation deployment created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/TxFunctionDeployment'
+ *       "400":
+ *         description: >-
+ *           Invalid public key, non-positive threshold price or sell amount
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       "429":
+ *         description: >-
+ *           Rate limit exceeded — the strict limiter allows 20 requests per
+ *           minute per IP.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/stop-loss", strictLimiter, controller.createStopLoss);
+
+/**
+ * @swagger
+ * /api/turrets/challenge:
+ *   post:
+ *     tags: [Turrets]
+ *     summary: Create a deployment signing challenge
+ *     description: >-
+ *       Builds the ManageData challenge transaction the owner has to sign
+ *       before the deployment can be created. The returned `deploymentHash`
+ *       binds the challenge to the normalised configuration.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ownerPublicKey, type, config]
+ *             properties:
+ *               ownerPublicKey:
+ *                 type: string
+ *                 description: Stellar public key that will own the deployment.
+ *               type:
+ *                 type: string
+ *                 enum: [dca, stop_loss]
+ *                 description: Kind of txFunction being deployed.
+ *               config:
+ *                 type: object
+ *                 description: Configuration of the txFunction.
+ *     responses:
+ *       "200":
+ *         description: Signing challenge created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/TurretsChallenge'
+ *       "400":
+ *         description: Invalid public key or unsupported txFunction configuration
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       "429":
+ *         description: >-
+ *           Rate limit exceeded — the strict limiter allows 20 requests per
+ *           minute per IP.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/challenge", strictLimiter, controller.createChallenge);
 
 /**
@@ -140,77 +372,6 @@ router.post("/challenge", strictLimiter, controller.createChallenge);
  */
 router.post("/deploy", strictLimiter, controller.deploy);
 
-/**
- * @swagger
- * /api/turrets/dca:
- *   post:
- *     tags: [Turrets]
- *     summary: Create a scheduled (DCA) payment deployment
- *     description: >-
- *       Creates a turrets deployment that repeatedly converts the configured
- *       quote asset for the recipient on a fixed interval. The deployment is
- *       created in the `active` state and starts running immediately.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [ownerPublicKey, recipient, amount]
- *             properties:
- *               ownerPublicKey:
- *                 type: string
- *                 description: Stellar public key that owns the deployment.
- *               recipient:
- *                 type: string
- *                 description: Stellar public key receiving each scheduled payment.
- *               amount:
- *                 type: number
- *                 description: Amount converted per interval; must be greater than 0.
- *               asset:
- *                 type: string
- *                 default: XLM
- *                 description: Quote asset code (defaults to `XLM`).
- *               assetIssuer:
- *                 type: string
- *                 nullable: true
- *                 description: Issuer of the quote asset when it is not `XLM`.
- *               frequency:
- *                 type: string
- *                 enum: [daily, weekly, monthly]
- *                 default: daily
- *                 description: How often each scheduled payment runs.
- *     responses:
- *       "201":
- *         description: Scheduled payment deployment created
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/TxFunctionDeployment'
- *       "400":
- *         description: >-
- *           Invalid public key, non-positive amount, or unsupported frequency
- *           (must be `daily`, `weekly`, or `monthly`)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       "429":
- *         description: >-
- *           Rate limit exceeded — the strict limiter allows 20 requests per
- *           minute per IP.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.post("/dca", strictLimiter, controller.createDca);
 
 /**
  * @swagger

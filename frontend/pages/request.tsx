@@ -18,7 +18,6 @@ export default function RequestPage() {
   const { publicKey } = useWallet();
   const { t } = useTranslation();
   const router = useRouter();
-  const { t } = useTranslation();
   const { r } = router.query;
 
   const [prefill, setPrefill] = useState<PrefillData | null>(null);

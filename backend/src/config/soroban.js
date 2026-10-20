@@ -7,9 +7,9 @@
 
 const sdk = require("@stellar/stellar-sdk");
 require("dotenv").config();
+const { getConfig } = require("./env");
 
-const SOROBAN_RPC_URL =
-  process.env.SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
+const SOROBAN_RPC_URL = getConfig().sorobanRpcUrl;
 
 const allowHttp = SOROBAN_RPC_URL.startsWith("http://");
 
@@ -30,7 +30,7 @@ const server = new SorobanRpc.Server(SOROBAN_RPC_URL, { allowHttp });
  * @returns {string} the configured contract ID, or "" when unset
  */
 function getContractId() {
-  return process.env.CONTRACT_ID || process.env.SOROBAN_CONTRACT_ID || "";
+  return getConfig().contractId;
 }
 
 /** Contract ID captured at module load, for informational/logging use. */

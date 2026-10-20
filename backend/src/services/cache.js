@@ -13,16 +13,11 @@
 
 "use strict";
 
-const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const CACHE_TTL_MS = parseInt(
-  process.env.ANALYTICS_CACHE_TTL_MS || String(DEFAULT_CACHE_TTL_MS),
-  10,
-);
-const REDIS_URL = process.env.REDIS_URL || null;
-const MAX_MEMORY_ENTRIES = parseInt(
-  process.env.ANALYTICS_CACHE_MAX_ENTRIES || "500",
-  10,
-);
+const { getConfig } = require("../config/env");
+const config = getConfig();
+const CACHE_TTL_MS = config.analyticsCacheTtlMs;
+const REDIS_URL = config.redisUrl;
+const MAX_MEMORY_ENTRIES = config.analyticsCacheMaxEntries;
 
 class AnalyticsCache {
   constructor() {

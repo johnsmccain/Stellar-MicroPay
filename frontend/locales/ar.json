@@ -9,7 +9,8 @@
     "continue": "متابعة",
     "copy": "نسخ",
     "copied": "تم النسخ!",
-    "unavailable": "غير متوفر"
+    "unavailable": "غير متوفر",
+    "skipToContent": "تخطَّ إلى المحتوى الرئيسي"
   },
   "navbar": {
     "home": "الرئيسية",
@@ -294,7 +295,24 @@
     "transactionSpeed": "سرعة المعاملة",
     "useAddress": "استخدام العنوان",
     "copyTxHash": "نسخ تجزئة المعاملة",
-    "removeRecipient": "إزالة المستلم"
+    "removeRecipient": "إزالة المستلم",
+    "assetLabel": "الأصل",
+    "customAsset": "مخصص",
+    "assetCode": "رمز الأصل",
+    "assetIssuer": "مُصدِر الأصل",
+    "selectAsset": "اختر الأصل",
+    "amountLabel": "المبلغ",
+    "balance": "الرصيد",
+    "insufficientBalance": "الرصيد غير كافٍ",
+    "memoTypeText": "نص",
+    "memoTypeHash": "تجزئة",
+    "memoLabel": "مذكرة",
+    "memoTemplates": "قوالب",
+    "recipientLabel": "المستلم",
+    "recipientPlaceholder": "G... أو @اسم_المستخدم",
+    "resolving": "جارٍ الحل…",
+    "invalidAddress": "عنوان غير صالح",
+    "pickContact": "اختر جهة اتصال"
   },
   "walletHealth": {
     "healthy": "حسابك في حالة جيدة",
@@ -674,6 +692,7 @@
     "howFastIsIt": "ما مدى سرعته؟",
     "howMuchDoesItCost": "كم تكلفته؟",
     "isItSafe": "هل هو آمن؟",
+    "loadingConnectPanel": "جارٍ تحميل خيارات الاتصال…",
     "networkDocs": "مستندات الشبكة",
     "officialAccountDocs": "مستندات الحسابات الرسمية",
     "officialTransactionDocs": "مستندات المعاملات الرسمية",
@@ -1357,6 +1376,56 @@
     "unknown": {
       "message": "خطأ في Ledger: {detail}",
       "recovery": "أعد توصيل جهاز Ledger وافتح تطبيق Stellar وحاول مرة أخرى."
+    }
+  },
+  "routeAnnouncer": {
+    "navigatedTo": "تم الانتقال إلى {title}"
+  },
+  "pages": {
+    "home": {
+      "title": "الرئيسية | Stellar MicroPay"
+    },
+    "notFound": {
+      "title": "الصفحة غير موجودة | Stellar MicroPay"
+    },
+    "contacts": {
+      "title": "جهات الاتصال | Stellar MicroPay"
+    },
+    "issueToken": {
+      "title": "إصدار رمز | Stellar MicroPay"
+    },
+    "multiSigSign": {
+      "title": "توقيع متعدد | Stellar MicroPay"
+    },
+    "network": {
+      "title": "الشبكة | Stellar MicroPay"
+    },
+    "pay": {
+      "title": "الدفع | Stellar MicroPay"
+    },
+    "request": {
+      "title": "طلب | Stellar MicroPay"
+    },
+    "scheduledPayments": {
+      "title": "المدفوعات المجدولة | Stellar MicroPay",
+      "heading": "المدفوعات المجدولة"
+    },
+    "settings": {
+      "title": "الإعدادات | Stellar MicroPay"
+    },
+    "streams": {
+      "title": "مدفوعات البث | Stellar MicroPay",
+      "heading": "مدفوعات البث"
+    },
+    "tip": {
+      "title": "إكرامية لـ {username} | Stellar MicroPay",
+      "fallbackTitle": "إكرامية | Stellar MicroPay"
+    },
+    "trade": {
+      "title": "التداول | Stellar MicroPay"
+    },
+    "transactions": {
+      "title": "المعاملات | Stellar MicroPay"
     }
   }
 }

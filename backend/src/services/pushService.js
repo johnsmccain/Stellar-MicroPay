@@ -10,6 +10,8 @@
 
 "use strict";
 
+const { getConfig } = require("../config/env");
+
 let webpush = null;
 try {
   // Optional dependency — declared in package.json but guarded so the API
@@ -19,9 +21,7 @@ try {
   webpush = null;
 }
 
-const CONTACT = process.env.VAPID_CONTACT || "mailto:admin@stellarmicropay.com";
-const PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
-const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
+const { vapidContact: CONTACT, vapidPublicKey: PUBLIC_KEY, vapidPrivateKey: PRIVATE_KEY } = getConfig();
 
 // Subscriptions: Map<publicKey, Array<PushSubscription>>
 const subscriptions = new Map();
@@ -143,7 +143,7 @@ function ensureWatcher(publicKey) {
   let close = null;
   try {
     const { Horizon } = require("@stellar/stellar-sdk");
-    const horizonUrl = process.env.HORIZON_URL || "https://horizon-testnet.stellar.org";
+    const horizonUrl = getConfig().horizonUrl;
     const server = new Horizon.Server(horizonUrl);
     close = server
       .payments()

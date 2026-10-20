@@ -17,8 +17,7 @@
 
 const fs = require("fs");
 const path = require("path");
-
-const DEFAULT_DATA_FILE = path.join(__dirname, "..", "..", "data", "leaderboard-opt-out.json");
+const { getConfig } = require("../config/env");
 
 function isValidPublicKey(publicKey) {
   return typeof publicKey === "string" && /^G[A-Z0-9]{55}$/.test(publicKey);
@@ -29,8 +28,7 @@ function isValidPublicKey(publicKey) {
  * @param {string} [options.dataFile] Path to the JSON file.
  */
 function createLeaderboardOptOutStore(options = {}) {
-  const dataFile =
-    options.dataFile || process.env.LEADERBOARD_OPTOUT_DATA_FILE || DEFAULT_DATA_FILE;
+  const dataFile = options.dataFile || getConfig().leaderboardOptOutDataFile;
   /** @type {Map<string, string>} publicKey -> opted-out-at ISO timestamp */
   let cache = new Map();
 

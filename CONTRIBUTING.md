@@ -37,14 +37,14 @@ Click **Fork** on the top-right of the GitHub page to create your own copy.
 ### 2. Clone your fork
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/stellar-micropay.git
-cd stellar-micropay
+git clone https://github.com/YOUR_USERNAME/Stellar-MicroPay.git
+cd Stellar-MicroPay
 ```
 
 ### 3. Add the upstream remote
 
 ```bash
-git remote add upstream https://github.com/your-org/stellar-micropay.git
+git remote add upstream https://github.com/Emmy123222/Stellar-MicroPay.git
 ```
 
 ### 4. Keep your fork up to date

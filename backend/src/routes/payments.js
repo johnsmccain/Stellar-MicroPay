@@ -14,6 +14,37 @@ const { requireSignedRequest } = require("../middleware/requestSignature");
 const paymentController = require("../controllers/paymentController");
 const { horizonCircuitBreakerMiddleware } = require("../middleware/horizonCircuitBreaker");
 
+const STELLAR_KEY_RE = /^G[A-Z2-7]{55}$/;
+const TX_HASH_RE = /^[0-9a-f]{64}$/i;
+
+function validateSubmitBody(req, res, next) {
+  const { senderPublicKey, recipientPublicKey, amount, asset, txHash } = req.body || {};
+  if (!STELLAR_KEY_RE.test(String(senderPublicKey || "")))
+    return res.status(400).json({ success: false, error: "senderPublicKey must be a valid Stellar public key" });
+  if (!STELLAR_KEY_RE.test(String(recipientPublicKey || "")))
+    return res.status(400).json({ success: false, error: "recipientPublicKey must be a valid Stellar public key" });
+  if (senderPublicKey === recipientPublicKey)
+    return res.status(400).json({ success: false, error: "recipientPublicKey must differ from senderPublicKey" });
+  const parsed = Number(amount);
+  if (!Number.isFinite(parsed) || parsed <= 0)
+    return res.status(400).json({ success: false, error: "amount must be a positive number" });
+  if (asset && !["XLM", "USDC"].includes(asset))
+    return res.status(400).json({ success: false, error: "asset must be XLM or USDC" });
+  if (txHash !== undefined && !TX_HASH_RE.test(String(txHash || "")))
+    return res.status(400).json({ success: false, error: "txHash must be a 64-character hex transaction hash" });
+  next();
+}
+
+function validateBroadcastBody(req, res, next) {
+  // The field name matches the one `paymentController.submitSignedTransaction`
+  // reads (`signedXDR`), so a body that passes validation is the same body the
+  // controller acts on.
+  const { signedXDR } = req.body || {};
+  if (!signedXDR || typeof signedXDR !== "string" || !signedXDR.trim())
+    return res.status(400).json({ success: false, error: "signedXDR is required" });
+  next();
+}
+
 /**
  * POST /api/payments/submit
  * Record a payment the client has already signed and broadcast.
@@ -27,6 +58,7 @@ router.post(
   "/submit",
   strictLimiter,
   requireSignedRequest,
+  validateSubmitBody,
   paymentController.submitPayment,
 );
 
@@ -46,7 +78,7 @@ router.get(
  * Submit a signed payment. Accepts an optional `X-Idempotency-Key` header (UUID)
  * so retried submissions replay the original response instead of double-spending.
  */
-router.post("/broadcast", strictLimiter, idempotency, paymentController.submitSignedTransaction);
+router.post("/broadcast", strictLimiter, idempotency, validateBroadcastBody, paymentController.submitSignedTransaction);
 
 /**
  * GET /api/payments/:publicKey
